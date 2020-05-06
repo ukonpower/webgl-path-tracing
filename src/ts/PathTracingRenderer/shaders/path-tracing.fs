@@ -21,7 +21,7 @@ struct Intersection {
 	vec3 position;
 	vec3 normal;
 	bool hit;
-	float dist;
+	float distance;
 	int material;
 };
 
@@ -48,11 +48,11 @@ void intersectionPlane( inout Intersection intersection, Ray ray, Plane plane ) 
 		float sn = dot( s, plane.normal );
 		float t = - ( sn / dn );
 
-		if( t > EPS ) {
+		if( t > EPS && t < intersection.distance ) {
 
 			intersection.hit = true;
 			intersection.position = ray.origin + ray.direction * t;
-			intersection.dist = t;
+			intersection.distance = t;
 			intersection.normal = plane.normal;
 
 		}
@@ -70,14 +70,13 @@ void intersectionSphere( inout Intersection intersection, Ray ray, Sphere sphere
 	float b = 2.0 * dot( s, ray.direction );
 	float c = dot( s, s ) - sphere.radius * sphere.radius;
 	float d = b * b - 4.0 * a * c;
+	float t = ( -b - sqrt( d ) ) / ( 2.0 * a );
 
-	if( d > EPS ) {
-
-		float t = ( -b - sqrt( d ) ) / ( 2.0 * a );
+	if( d > EPS && t < intersection.distance ) {
 
 		intersection.hit = true;
 		intersection.position = ray.origin + ray.direction * t;
-		intersection.dist = t;
+		intersection.distance = t;
 		intersection.normal = normalize( intersection.position - sphere.position );
 		
 	}
@@ -87,7 +86,7 @@ void intersectionSphere( inout Intersection intersection, Ray ray, Sphere sphere
 void shootRay( inout Intersection intersection, Ray ray ) {
 
 	intersection.hit = false;
-	intersection.dist = INF;
+	intersection.distance = INF;
 	intersection.material = 0;
 
 	Plane plane;
@@ -96,7 +95,7 @@ void shootRay( inout Intersection intersection, Ray ray ) {
 	intersectionPlane( intersection, ray, plane );
 
 	Sphere sphere;
-	sphere.radius = 1.0;
+	sphere.radius = 0.5;
 	sphere.position = vec3( 0, 0.5, 0 );
 	intersectionSphere( intersection, ray, sphere );
 

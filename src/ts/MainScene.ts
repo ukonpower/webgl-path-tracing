@@ -35,8 +35,8 @@ export class MainScene extends ORE.BaseScene {
 
 	public initScene() {
 
-		this.camera.position.set( 0, 2, 5 );
-		this.camera.lookAt( 0, 0, 0 );
+		this.camera.position.set( 0, 0.5, 3 );
+		this.camera.lookAt( 0, 0.4, 0 );
 
 		this.camera.matrixWorldNeedsUpdate = true;
 
