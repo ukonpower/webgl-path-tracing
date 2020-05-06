@@ -18,9 +18,10 @@ struct Ray {
 };
 
 struct Intersection {
+	vec3 position;
+	vec3 normal;
 	bool hit;
 	float dist;
-	vec3 normal;
 	int material;
 };
 
@@ -30,19 +31,54 @@ struct Sphere {
 	float material;
 };
 
+struct Plane {
+	vec3 position;
+	vec3 normal;
+	float material;
+};
+
+void intersectionPlane( inout Intersection intersection, Ray ray, Plane plane ) {
+
+	vec3 s = ray.origin - plane.position;
+
+	float dn = dot( ray.direction, plane.normal );
+
+	if( dn != 0.0 ) {
+
+		float sn = dot( s, plane.normal );
+		float t = - ( sn / dn );
+
+		if( t > EPS ) {
+
+			intersection.hit = true;
+			intersection.position = ray.origin + ray.direction * t;
+			intersection.dist = t;
+			intersection.normal = plane.normal;
+
+		}
+		
+	}
+	
+}
+
 // http://viclw17.github.io/2018/07/16/raytracing-ray-sphere-intersection/
 
 void intersectionSphere( inout Intersection intersection, Ray ray, Sphere sphere ) {
 
-	vec3 oc = ray.origin - sphere.position;
+	vec3 s = ray.origin - sphere.position;
 	float a = dot( ray.direction, ray.direction );
-	float b = 2.0 * dot( oc, ray.direction );
-	float c = dot( oc, oc ) - sphere.radius * sphere.radius;
-	float discriminant = b * b - 4.0 * a * c;
+	float b = 2.0 * dot( s, ray.direction );
+	float c = dot( s, s ) - sphere.radius * sphere.radius;
+	float d = b * b - 4.0 * a * c;
 
-	if( discriminant > 0.01 ) {
+	if( d > EPS ) {
+
+		float t = ( -b - sqrt( d ) ) / ( 2.0 * a );
 
 		intersection.hit = true;
+		intersection.position = ray.origin + ray.direction * t;
+		intersection.dist = t;
+		intersection.normal = normalize( intersection.position - sphere.position );
 		
 	}
 	
@@ -54,11 +90,16 @@ void shootRay( inout Intersection intersection, Ray ray ) {
 	intersection.dist = INF;
 	intersection.material = 0;
 
+	Plane plane;
+	plane.position = vec3( 0, 0, 0 );
+	plane.normal = vec3( 0, 1, 0 );
+	intersectionPlane( intersection, ray, plane );
+
 	Sphere sphere;
 	sphere.radius = 1.0;
-	sphere.position = vec3( 0, 0, 0 );
-
+	sphere.position = vec3( 0, 0.5, 0 );
 	intersectionSphere( intersection, ray, sphere );
+
 
 }
 
@@ -72,7 +113,7 @@ vec3 radiance( Ray ray ) {
 
 	// }
 
-	return intersection.hit ? vec3( 1.0 ) : vec3( 0.0 );
+	return intersection.hit ? intersection.normal : vec3( 0.0 );
 	
 }
 
@@ -86,7 +127,6 @@ void main( void ) {
 	ray.direction = normalize( ray.direction );
 
 	vec4 o = vec4( radiance( ray ), 1.0 );
-
 	gl_FragColor = o;
 
 }
