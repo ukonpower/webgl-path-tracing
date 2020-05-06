@@ -1,16 +1,23 @@
 import * as ORE from '@ore-three-ts';
 import * as THREE from 'three';
+import { PathTracingRenderer } from './PathTracingRenderer';
 
 export class MainScene extends ORE.BaseScene {
 
-	private box: THREE.Mesh;
-	private light: THREE.Light;
+	private commonUniforms: ORE.Uniforms;
+	private pathTracingRenderer: PathTracingRenderer;
 
 	constructor() {
 
 		super();
 
 		this.name = "MainScene";
+
+		this.commonUniforms = {
+			time: {
+				value: 0
+			}
+		};
 
 	}
 
@@ -20,25 +27,15 @@ export class MainScene extends ORE.BaseScene {
 
 		this.renderer = this.gProps.renderer;
 
-		this.camera.position.set( 0, 1.5, 3 );
-		this.camera.lookAt( 0, 0, 0 );
-
-		var boxGeo = new THREE.BoxGeometry( 1, 1, 1 );
-		var boXMat = new THREE.MeshNormalMaterial();
-		this.box = new THREE.Mesh( boxGeo, boXMat );
-		this.scene.add( this.box );
-
-		this.light = new THREE.DirectionalLight();
-		this.light.position.y = 10;
-		this.scene.add( this.light );
+		this.pathTracingRenderer = new PathTracingRenderer( this.renderer, this.gProps.resizeArgs.windowPixelSize, this.commonUniforms );
 
 	}
 
 	public animate( deltaTime: number ) {
 
-		this.box.rotateY( 0.01 );
+		this.commonUniforms.time.value = this.time;
 
-		this.renderer.render( this.scene, this.camera );
+		this.pathTracingRenderer.render();
 
 	}
 

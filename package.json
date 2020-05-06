@@ -1,5 +1,5 @@
 {
-  "name": "",
+  "name": "webgl-path-tracing",
   "version": "0.0.1",
   "description": "",
   "repository": {
@@ -39,6 +39,7 @@
     "lethargy": "^1.0.9",
     "oimo": "^1.0.9",
     "three": "^0.114.0",
-    "to-px": "^1.1.0"
+    "to-px": "^1.1.0",
+    "tweakpane": "^1.3.2"
   }
 }
