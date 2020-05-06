@@ -26,7 +26,13 @@ export class PathTracingRenderer extends ORE.GPUComputationController {
 			},
 			renderResult: {
 				value: null
-			}
+			},
+			cameraMatrixWorld: {
+				value: null
+			},
+			cameraProjectionMatrixInverse: {
+				value: null
+			},
 		}, parentUniforms );
 
 		this.init();
@@ -50,14 +56,16 @@ export class PathTracingRenderer extends ORE.GPUComputationController {
 
 	}
 
-	public render() {
+	public render( camera: THREE.PerspectiveCamera ) {
 
 		this.commonUniforms.backBuffer.value = this.renderResultData.buffer.texture;
+		this.commonUniforms.cameraMatrixWorld.value = camera.matrixWorld.clone();
+		this.commonUniforms.cameraProjectionMatrixInverse.value = camera.projectionMatrixInverse.clone();
 
-		this.compute( this.renderKernel, this.renderResultData );
+		this.compute( this.renderKernel, this.renderResultData, camera );
 
 		this.commonUniforms.renderResult.value = this.renderResultData.buffer.texture;
-		this.renderer.render( this.renderScene, this.camera );
+		this.renderer.render( this.renderScene, camera );
 
 	}
 

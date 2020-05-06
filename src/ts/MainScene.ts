@@ -29,13 +29,24 @@ export class MainScene extends ORE.BaseScene {
 
 		this.pathTracingRenderer = new PathTracingRenderer( this.renderer, this.gProps.resizeArgs.windowPixelSize, this.commonUniforms );
 
+		this.initScene();
+
+	}
+
+	public initScene() {
+
+		this.camera.position.set( 4, 0, 5 );
+		this.camera.lookAt( 0, 0, 0 );
+
+		this.camera.matrixWorldNeedsUpdate = true;
+
 	}
 
 	public animate( deltaTime: number ) {
 
 		this.commonUniforms.time.value = this.time;
 
-		this.pathTracingRenderer.render();
+		this.pathTracingRenderer.render( this.camera );
 
 	}
 
