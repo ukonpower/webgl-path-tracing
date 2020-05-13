@@ -94,9 +94,11 @@ vec3 random3D( vec2 p, float seed ) {
 	
 }
 
-void reflection( Intersection intersection, inout Ray ray ) {
+void reflection( Intersection intersection, inout Ray ray, int bounce ) {
 
-	vec2 rnd = vec2( random( vUv + sin( frame * 0.001 ) ), random( vUv - cos( frame * 0.001 ) ) );
+	float seed =  frame * 0.001 + float( bounce );
+
+	vec2 rnd = vec2( random( vUv + sin( seed ) ), random( vUv - cos( seed) ) );
 	vec3 normal = intersection.normal;
 	
 	//diffuse
@@ -187,13 +189,6 @@ void shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 	sphere.material.roughness = 0.8;
 	intersectionSphere( intersection, ray, sphere );
 
-	
-	sphere.radius = 100.;
-	sphere.position = vec3( 0.0, -100, 0 );
-	sphere.material.albedo = vec3( 0.8 );
-	sphere.material.roughness = 0.8;
-	intersectionSphere( intersection, ray, sphere );
-
 	//light
 	sphere.radius = 2.0;
 	sphere.position = vec3( 0.0, 5.0, 0.0 );
@@ -203,7 +198,7 @@ void shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 
 	if( intersection.hit ) {
 
-		reflection( intersection, ray );
+		reflection( intersection, ray, bounce );
 
 		
 	} else {
