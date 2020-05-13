@@ -33,12 +33,12 @@ export class MainScene extends ORE.BaseScene {
 		this.renderer = this.gProps.renderer;
 
 		this.controls = new OrbitControls( this.camera, this.renderer.domElement );
-		
+
 		this.controls.addEventListener( 'change', () => {
-			
+
 			this.commonUniforms.frame.value = 0.0;
 
-		})
+		} );
 
 		this.pathTracingRenderer = new PathTracingRenderer( this.renderer, this.gProps.resizeArgs.windowPixelSize, this.commonUniforms );
 
