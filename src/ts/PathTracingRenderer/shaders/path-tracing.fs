@@ -51,39 +51,6 @@ struct Plane {
 	Material material;
 };
 
-//法線分布関数
-float GGX( float nh, float a ) { 
-
-	a = max( 0.005, a );
-
-	float a2 = a * a;
-	float nh2 = nh * nh;
-	float d = nh2 * ( a2 - 1.0 ) + 1.0;
-
-	return a2 / ( PI * d * d );
-	
-}
-
-//幾何減衰項
-float SmithSchlickGGX( float NV, float NL, float a ) {
-
-	float k = ( a ) / 2.0;
-
-	float v = NV / ( NV * ( 1.0 - k ) + k + 0.0001 );
-	float l = NL / ( NL * ( 1.0 - k ) + k + 0.0001 );
-
-	return v * l;
-
-}
-
-//フレネル
-vec3 Schlick( vec3 f0, float HV ) {
-
-	return f0 + ( 1.0 - f0 ) * pow( 1.0 - HV, 5.0 );
-
-}
-
-
 vec3 random3D( vec2 p, float seed ) {
 
 	return vec3(
@@ -94,24 +61,44 @@ vec3 random3D( vec2 p, float seed ) {
 	
 }
 
-void reflection( Intersection intersection, inout Ray ray, int bounce ) {
+//http://project-asura.com/blog/archives/3124
+vec3 ggx( Intersection intersection, Ray ray, vec2 noise )
+{
 
-	float seed =  frame * 0.001 + float( bounce );
+	vec3 normal = intersection.normal;
+	float roughness = intersection.material.roughness;
 
-	vec2 rnd = vec2( random( vUv + sin( seed ) ), random( vUv - cos( seed) ) );
+    float a = roughness * roughness;
+
+    float phi = 2.0 * PI * noise.x;
+    float cosTheta = sqrt( ( 1.0  - noise.y ) / ( 1.0  + ( a * a - 1.0 ) * noise.y ) );
+    float sinTheta = sqrt( 1.0  - cosTheta * cosTheta );
+    
+    vec3 H;
+    H.x = sinTheta * cos( phi );
+    H.y = sinTheta * sin( phi );
+    H.z = cosTheta;
+    
+    vec3 upVector = abs( normal.z ) < 0.999 ? vec3( 0, 0, 1 ) : vec3( 1, 0, 0 );
+    vec3 tangentX = normalize( cross( upVector , normal ) );
+    vec3 tangentY = cross( normal, tangentX );
+
+    return reflect( ray.direction, tangentX * H.x + tangentY * H.y + normal * H.z );
+
+}
+
+vec3 diffuse( Intersection intersection, vec2 noise ) {
+
 	vec3 normal = intersection.normal;
 	
-	//diffuse
-	float r = sqrt( rnd.x );
-	float theta = TPI * rnd.y;
+	float r = sqrt( noise.x );
+	float theta = TPI * noise.y;
 
-	vec3 tDir = vec3( r * cos( theta ), r * sin( theta ), sqrt( 1.0 - rnd.x ) );
-
+	vec3 tDir = vec3( r * cos( theta ), r * sin( theta ), sqrt( 1.0 - noise.x ) );
 	vec3 tangent = normalize( cross( normal, abs( normal.x ) > EPS ? vec3( 0.0, 1.0, 0.0 ) : vec3( 1.0, 0.0, 0.0 ) ) );
 	vec3 binormal = cross( tangent, normal );
 	
-	ray.direction = tangent * tDir.x + binormal * tDir.y + normal * tDir.z;
-	ray.origin = intersection.position;
+	return tangent * tDir.x + binormal * tDir.y + normal * tDir.z;
 
 }
 
@@ -168,7 +155,6 @@ void shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 	intersection.hit = false;
 	intersection.distance = INF;
 
-
 	Plane plane;
 	plane.position = vec3( 0, 0, 0 );
 	plane.normal = normalize( vec3( 0.0, 1, 0 ) );
@@ -176,34 +162,45 @@ void shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 	plane.material.albedo = vec3( 0.8 );
 	intersectionPlane( intersection, ray, plane );
 
-	Sphere sphere;
-	sphere.radius = 0.5;
-	sphere.position = vec3( -0.5, 0.5, 0 );
-	sphere.material.albedo = vec3( 1.0, 0.0, 0.0 );
-	sphere.material.roughness = 0.8;
-	intersectionSphere( intersection, ray, sphere );
+	Sphere redSphere;
+	redSphere.radius = 0.5;
+	redSphere.position = vec3( -0.5, 0.5, 0 );
+	redSphere.material.albedo = vec3( 1.0, 0.0, 0.0 );
+	redSphere.material.metalness = 1.0;
+	redSphere.material.roughness = 0.2;
+	intersectionSphere( intersection, ray, redSphere );
 
-	sphere.radius = 0.5;
-	sphere.position = vec3( 0.6, 0.5, 0 );
-	sphere.material.albedo = vec3( 1.0, 1.0, 1.0 );
-	sphere.material.roughness = 0.8;
-	intersectionSphere( intersection, ray, sphere );
+	Sphere whiteSphere;
+	whiteSphere.radius = 0.5;
+	whiteSphere.position = vec3( 0.6, 0.5, 0 );
+	whiteSphere.material.albedo = vec3( 1.0 );
+	whiteSphere.material.metalness = 0.0;
+	whiteSphere.material.roughness = 1.0;
+	intersectionSphere( intersection, ray, whiteSphere );
 
 	//light
-	sphere.radius = 2.0;
-	sphere.position = vec3( 0.0, 5.0, 0.0 );
-	sphere.material.roughness = 1.0;
-	sphere.material.emmission = vec3( 1.0 );
-	// intersectionSphere( intersection, ray, sphere );
+	Sphere lightSphere;
+	lightSphere.radius = 2.0;
+	lightSphere.position = vec3( 0.0, 5.0, 0.0 );
+	lightSphere.material.roughness = 1.0;
+	lightSphere.material.emmission = vec3( 10.0 );
+	intersectionSphere( intersection, ray, lightSphere );
 
 	if( intersection.hit ) {
 
-		reflection( intersection, ray, bounce );
+		float seed =  frame * 0.001 + float( bounce );
+		vec2 noise = vec2( random( vUv + sin( seed ) ), random( vUv - cos( seed ) ) );
 
+		vec3 diffuseDir = diffuse( intersection, noise );
+		vec3 ggxDir = ggx( intersection, ray, noise );
+		
+		ray.direction = ggxDir;
+		ray.origin = intersection.position;
 		
 	} else {
 
 		intersection.material.emmission = vec3( 1.0 );
+		intersection.material.emmission = vec3( 0.0 );
 
 	}
 
@@ -221,7 +218,7 @@ vec3 radiance( inout Ray ray ) {
 		shootRay( intersection, ray, i );
 
 		vec3 emmission = intersection.material.emmission;
-		vec3 color = intersection.material.albedo;
+		vec3 color = mix( vec3( 1.0 ), intersection.material.albedo, intersection.material.metalness );
 		acc += ref * emmission;
 		ref *= color;
 
