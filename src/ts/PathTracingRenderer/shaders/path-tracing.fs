@@ -9,7 +9,7 @@ uniform sampler2D backBuffer;
 
 varying vec2 vUv;
 
-#define MAX_BOUNCE 2
+#define MAX_BOUNCE 10
 
 $constants
 $random
@@ -24,9 +24,7 @@ struct Ray {
 
 struct Material {
 	vec3 albedo;
-	vec3 diffseColor;
-	vec3 specularColor;
-	vec3 emmission;
+	vec3 emission;
 	float roughness;
 	float metalness;
 };
@@ -150,7 +148,7 @@ void intersectionSphere( inout Intersection intersection, Ray ray, Sphere sphere
 	
 }
 
-void shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
+int shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 
 	intersection.hit = false;
 	intersection.distance = INF;
@@ -158,24 +156,25 @@ void shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 	Plane plane;
 	plane.position = vec3( 0, 0, 0 );
 	plane.normal = normalize( vec3( 0.0, 1, 0 ) );
-	plane.material.roughness = 0.9;
-	plane.material.albedo = vec3( 0.8 );
+	plane.material.roughness = 0.0;
+	plane.material.albedo = vec3( 1.0 );
+	plane.material.metalness = 0.0;
 	intersectionPlane( intersection, ray, plane );
 
 	Sphere redSphere;
 	redSphere.radius = 0.5;
 	redSphere.position = vec3( -0.5, 0.5, 0 );
 	redSphere.material.albedo = vec3( 1.0, 0.0, 0.0 );
-	redSphere.material.metalness = 1.0;
+	redSphere.material.metalness = 0.0;
 	redSphere.material.roughness = 0.2;
 	intersectionSphere( intersection, ray, redSphere );
 
 	Sphere whiteSphere;
 	whiteSphere.radius = 0.5;
 	whiteSphere.position = vec3( 0.6, 0.5, 0 );
-	whiteSphere.material.albedo = vec3( 1.0 );
+	whiteSphere.material.albedo = vec3( 1.0, 1.0, 1.0 );
 	whiteSphere.material.metalness = 0.0;
-	whiteSphere.material.roughness = 1.0;
+	whiteSphere.material.roughness = 0.2;
 	intersectionSphere( intersection, ray, whiteSphere );
 
 	//light
@@ -183,7 +182,7 @@ void shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 	lightSphere.radius = 2.0;
 	lightSphere.position = vec3( 0.0, 5.0, 0.0 );
 	lightSphere.material.roughness = 1.0;
-	lightSphere.material.emmission = vec3( 10.0 );
+	lightSphere.material.emission = vec3( 10.0 );
 	intersectionSphere( intersection, ray, lightSphere );
 
 	if( intersection.hit ) {
@@ -191,18 +190,30 @@ void shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 		float seed =  frame * 0.001 + float( bounce );
 		vec2 noise = vec2( random( vUv + sin( seed ) ), random( vUv - cos( seed ) ) );
 
-		vec3 diffuseDir = diffuse( intersection, noise );
-		vec3 ggxDir = ggx( intersection, ray, noise );
-		
-		ray.direction = ggxDir;
 		ray.origin = intersection.position;
-		
+
+		if( random( vUv * 10.0 + sin( time + float( frame ) + seed ) ) > 0.5 * ( 1.0 - intersection.material.roughness * ( 1.0 - intersection.material.metalness )  ) + intersection.material.metalness * 0.5 ) {
+			
+			ray.direction = diffuse( intersection, noise );
+			
+			return 0;
+			
+		} else {
+
+			ray.direction = ggx( intersection, ray, noise );
+
+			return 1;
+
+		}
+
 	} else {
 
-		intersection.material.emmission = vec3( 1.0 );
-		intersection.material.emmission = vec3( 0.0 );
+		intersection.material.emission = vec3( 1.0 );
+		intersection.material.emission = vec3( 0.0 );
 
 	}
+
+	return 0;
 
 }
 
@@ -210,30 +221,53 @@ vec3 radiance( inout Ray ray ) {
 
 	Intersection intersection;
 
-	vec3 acc = vec3( 0.0 );
-	vec3 ref = vec3( 1.0 );
+	// Material memMaterial[MAX_BOUNCE];
+	float memMetalness[MAX_BOUNCE];
+	vec3 memAlbedo[MAX_BOUNCE];
+	vec3 memEmission[MAX_BOUNCE];
 
-	for ( int i = 0; i < 20; i++ ) {
+	int memDir[MAX_BOUNCE];
 
-		shootRay( intersection, ray, i );
+	int bounce;
+	
+	for ( int i = 0; i < MAX_BOUNCE; i++ ) {
 
-		vec3 emmission = intersection.material.emmission;
-		vec3 color = mix( vec3( 1.0 ), intersection.material.albedo, intersection.material.metalness );
-		acc += ref * emmission;
-		ref *= color;
+		memDir[i] = shootRay( intersection, ray, i );
+		memAlbedo[i] = intersection.material.albedo;
+		memEmission[i] = intersection.material.emission;
+		memMetalness[i] = intersection.material.metalness;
 
 		if( !intersection.hit ) {
+
+			bounce = i;
 
 			break;
 			
 		}
+	}
 
-		// acc = ray.direction;
-		// break;
+	vec3 emission = memEmission[ MAX_BOUNCE - 1 ];
+	vec3 col;
+
+	for ( int i = MAX_BOUNCE - 2; i >= 0 ; i-- ) {
+
+		if ( memDir[ i ] > 0 ) {
+
+			//ggx
+			col *= mix( vec3( 1.0 ), memAlbedo[i], memMetalness[ i ] );
+
+		} else {
+			
+			//diffuse
+			col *= mix( vec3( 0.0 ), memAlbedo[i], 1.0 - memMetalness[ i ] );
+
+		}
+
+		col += memEmission[ i ];
 
 	}
 
-	return acc;
+	return col;
 	
 }
 

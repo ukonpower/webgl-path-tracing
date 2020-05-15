@@ -14,7 +14,7 @@ class APP {
 		this.controller = new ORE.Controller( {
 
 			canvas: this.canvas,
-			retina: true,
+			retina: false,
 
 		} );
 
