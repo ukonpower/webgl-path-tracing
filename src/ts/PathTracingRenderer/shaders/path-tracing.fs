@@ -161,20 +161,28 @@ int shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 	plane.material.metalness = 0.0;
 	intersectionPlane( intersection, ray, plane );
 
+	Sphere redSphereMetal;
+	redSphereMetal.radius = 0.5;
+	redSphereMetal.position = vec3( -0.55, 0.5, 0.45 );
+	redSphereMetal.material.albedo = vec3( 1.0, 0.0, 0.0 );
+	redSphereMetal.material.metalness = 1.0;
+	redSphereMetal.material.roughness = 0.2;
+	intersectionSphere( intersection, ray, redSphereMetal );
+
 	Sphere redSphere;
 	redSphere.radius = 0.5;
-	redSphere.position = vec3( -0.5, 0.5, 0 );
+	redSphere.position = vec3( 0.55, 0.5, 0.45 );
 	redSphere.material.albedo = vec3( 1.0, 0.0, 0.0 );
-	redSphere.material.metalness = 1.0;
+	redSphere.material.metalness = 0.0;
 	redSphere.material.roughness = 0.2;
 	intersectionSphere( intersection, ray, redSphere );
 
 	Sphere whiteSphere;
 	whiteSphere.radius = 0.5;
-	whiteSphere.position = vec3( 0.6, 0.5, 0 );
-	whiteSphere.material.albedo = vec3( 1.0, 0.0, 0.0 );
+	whiteSphere.position = vec3( 0.0, 0.5, -0.45 );
+	whiteSphere.material.albedo = vec3( 1.0 );
 	whiteSphere.material.metalness = 0.0;
-	whiteSphere.material.roughness = 0.2;
+	whiteSphere.material.roughness = 1.0;
 	intersectionSphere( intersection, ray, whiteSphere );
 
 	//light
