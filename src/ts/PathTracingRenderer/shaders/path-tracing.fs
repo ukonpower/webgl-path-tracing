@@ -2,6 +2,10 @@ uniform vec2 dataSize;
 uniform mat4 cameraMatrixWorld;
 uniform mat4 cameraProjectionMatrixInverse;
 
+uniform float roughness;
+uniform float metalness;
+uniform vec3 albedo;
+
 uniform float time;
 uniform float frame;
 
@@ -172,9 +176,9 @@ int shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 	Sphere redSphere;
 	redSphere.radius = 0.5;
 	redSphere.position = vec3( 0.55, 0.5, 0.45 );
-	redSphere.material.albedo = vec3( 1.0, 0.0, 0.0 );
-	redSphere.material.metalness = 0.0;
-	redSphere.material.roughness = 0.2;
+	redSphere.material.albedo = albedo;
+	redSphere.material.metalness = metalness;
+	redSphere.material.roughness = roughness;
 	intersectionSphere( intersection, ray, redSphere );
 
 	Sphere whiteSphere;

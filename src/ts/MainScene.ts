@@ -3,11 +3,16 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { PathTracingRenderer } from './PathTracingRenderer';
 
+import Tweakpane from 'tweakpane';
+
 export class MainScene extends ORE.BaseScene {
 
 	private commonUniforms: ORE.Uniforms;
 	private pathTracingRenderer: PathTracingRenderer;
 	private controls: OrbitControls;
+
+	private pane: Tweakpane;
+	private param: any;
 
 	constructor() {
 
@@ -21,7 +26,16 @@ export class MainScene extends ORE.BaseScene {
 			},
 			frame: {
 				value: 0
-			}
+			},
+			roughness: {
+				value: 0
+			},
+			metalness: {
+				value: 0
+			},
+			albedo: {
+				value: new THREE.Color()
+			},
 		};
 
 	}
@@ -42,7 +56,47 @@ export class MainScene extends ORE.BaseScene {
 
 		this.pathTracingRenderer = new PathTracingRenderer( this.renderer, this.gProps.resizeArgs.windowPixelSize, this.commonUniforms );
 
+		this.initParam();
+
 		this.initScene();
+
+	}
+
+	public initParam() {
+
+		this.param = {
+			metalness: 0,
+			albedo: '#F00',
+			roughness: 0.1
+		};
+
+		this.pane = new Tweakpane();
+
+		this.pane.addInput( this.param, 'metalness', {
+			min: 0, max: 1
+		} );
+
+		this.pane.addInput( this.param, 'roughness', {
+			min: 0, max: 1
+		} );
+
+		this.pane.addInput( this.param, 'albedo' );
+
+	}
+
+	private updatePane() {
+
+		// let keys = Object.keys( this.param );
+
+		// for ( let i = 0; i < keys.length; i++ ) {
+
+		// 	this.commonUniforms[ keys[i] ] && this.commonUniforms[ keys[i] ].value = this.param[keys[i]];
+
+		// }
+
+		this.commonUniforms.metalness.value = this.param.metalness;
+		this.commonUniforms.roughness.value = this.param.roughness;
+		this.commonUniforms.albedo.value.set( this.param.albedo );
 
 	}
 
@@ -56,6 +110,8 @@ export class MainScene extends ORE.BaseScene {
 	public animate( deltaTime: number ) {
 
 		this.commonUniforms.time.value = this.time;
+
+		this.updatePane();
 
 		this.controls.update();
 
@@ -78,6 +134,8 @@ export class MainScene extends ORE.BaseScene {
 	}
 
 	public onTouchMove( cursor: ORE.Cursor, event: MouseEvent ) {
+
+		this.commonUniforms.frame.value = 0.0;
 
 	}
 
