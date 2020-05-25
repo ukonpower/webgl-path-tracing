@@ -1,6 +1,7 @@
 varying vec2 vUv;
 varying vec3 vNormal;
 varying float vDepth;
+varying vec4 vPos;
 
 void main( void ) {
 
@@ -11,6 +12,6 @@ void main( void ) {
 
 	vUv = uv;
 	vNormal = normalize( normalMatrix * normal );
-	vDepth = 0.5;
+	vPos = gl_Position;
 
 }

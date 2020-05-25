@@ -6,6 +6,7 @@ uniform float metalness;
 varying vec2 vUv;
 varying vec3 vNormal;
 varying float vDepth;
+varying vec4 vPos;
 
 void main( void ) {
 
@@ -27,7 +28,7 @@ void main( void ) {
 	} else if ( renderType == 3.0 ) {
 
 		//depth
-		gl_FragColor = vec4( vDepth, 0.0, 0.0, 0.0 );
+		gl_FragColor = vec4( ( vPos.z / vPos.w + 1.0 ) * 0.5 );
 		
 	}
 

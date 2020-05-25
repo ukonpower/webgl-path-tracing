@@ -467,7 +467,7 @@ eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export (binding) *
 /*! no static exports found */
 /***/ (function(module, exports) {
 
-eval("module.exports = \"uniform float renderType;\\r\\nuniform vec3 albedo;\\r\\nuniform float roughness;\\r\\nuniform float metalness;\\r\\n\\r\\nvarying vec2 vUv;\\r\\nvarying vec3 vNormal;\\r\\nvarying float vDepth;\\r\\n\\r\\nvoid main( void ) {\\r\\n\\r\\n\\tif( renderType == 0.0 ) {\\r\\n\\r\\n\\t\\t//albedo\\r\\n\\t\\tgl_FragColor = vec4( albedo, 0.0 );\\r\\n\\t\\t\\r\\n\\t} else if ( renderType == 1.0 ) {\\r\\n\\r\\n\\t\\t//material\\r\\n\\t\\tgl_FragColor = vec4( roughness, metalness, 0.0, 0.0 );\\r\\n\\t\\t\\r\\n\\t} else if ( renderType == 2.0 ) {\\r\\n\\r\\n\\t\\t//normal\\r\\n\\t\\tgl_FragColor = vec4( vNormal * 0.5 + 0.5, 0.0 );\\r\\n\\t\\t\\r\\n\\t} else if ( renderType == 3.0 ) {\\r\\n\\r\\n\\t\\t//depth\\r\\n\\t\\tgl_FragColor = vec4( vDepth, 0.0, 0.0, 0.0 );\\r\\n\\t\\t\\r\\n\\t}\\r\\n\\r\\n\\r\\n}\"\n\n//# sourceURL=webpack:///./src/ts/OrayTracingMaterial/shaders/oray.fs?");
+eval("module.exports = \"uniform float renderType;\\r\\nuniform vec3 albedo;\\r\\nuniform float roughness;\\r\\nuniform float metalness;\\r\\n\\r\\nvarying vec2 vUv;\\r\\nvarying vec3 vNormal;\\r\\nvarying float vDepth;\\r\\nvarying vec4 vPos;\\r\\n\\r\\nvoid main( void ) {\\r\\n\\r\\n\\tif( renderType == 0.0 ) {\\r\\n\\r\\n\\t\\t//albedo\\r\\n\\t\\tgl_FragColor = vec4( albedo, 0.0 );\\r\\n\\t\\t\\r\\n\\t} else if ( renderType == 1.0 ) {\\r\\n\\r\\n\\t\\t//material\\r\\n\\t\\tgl_FragColor = vec4( roughness, metalness, 0.0, 0.0 );\\r\\n\\t\\t\\r\\n\\t} else if ( renderType == 2.0 ) {\\r\\n\\r\\n\\t\\t//normal\\r\\n\\t\\tgl_FragColor = vec4( vNormal * 0.5 + 0.5, 0.0 );\\r\\n\\t\\t\\r\\n\\t} else if ( renderType == 3.0 ) {\\r\\n\\r\\n\\t\\t//depth\\r\\n\\t\\tgl_FragColor = vec4( ( vPos.z / vPos.w + 1.0 ) * 0.5 );\\r\\n\\t\\t\\r\\n\\t}\\r\\n\\r\\n\\r\\n}\"\n\n//# sourceURL=webpack:///./src/ts/OrayTracingMaterial/shaders/oray.fs?");
 
 /***/ }),
 
@@ -478,7 +478,7 @@ eval("module.exports = \"uniform float renderType;\\r\\nuniform vec3 albedo;\\r\
 /*! no static exports found */
 /***/ (function(module, exports) {
 
-eval("module.exports = \"varying vec2 vUv;\\r\\nvarying vec3 vNormal;\\r\\nvarying float vDepth;\\r\\n\\r\\nvoid main( void ) {\\r\\n\\r\\n\\tvec3 pos = position;\\r\\n\\r\\n\\tvec4 mvPosition = modelViewMatrix * vec4( pos, 1.0 );\\r\\n\\tgl_Position = projectionMatrix * mvPosition;\\r\\n\\r\\n\\tvUv = uv;\\r\\n\\tvNormal = normalize( normalMatrix * normal );\\r\\n\\tvDepth = 0.5;\\r\\n\\r\\n}\"\n\n//# sourceURL=webpack:///./src/ts/OrayTracingMaterial/shaders/oray.vs?");
+eval("module.exports = \"varying vec2 vUv;\\r\\nvarying vec3 vNormal;\\r\\nvarying float vDepth;\\r\\nvarying vec4 vPos;\\r\\n\\r\\nvoid main( void ) {\\r\\n\\r\\n\\tvec3 pos = position;\\r\\n\\r\\n\\tvec4 mvPosition = modelViewMatrix * vec4( pos, 1.0 );\\r\\n\\tgl_Position = projectionMatrix * mvPosition;\\r\\n\\r\\n\\tvUv = uv;\\r\\n\\tvNormal = normalize( normalMatrix * normal );\\r\\n\\tvPos = gl_Position;\\r\\n\\r\\n}\"\n\n//# sourceURL=webpack:///./src/ts/OrayTracingMaterial/shaders/oray.vs?");
 
 /***/ }),
 
