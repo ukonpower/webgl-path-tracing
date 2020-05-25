@@ -10,6 +10,10 @@ uniform float time;
 uniform float frame;
 
 uniform sampler2D backBuffer;
+uniform sampler2D albedoBuffer;
+uniform sampler2D materialBuffer;
+uniform sampler2D normalBuffer;
+uniform sampler2D depthBuffer;
 
 varying vec2 vUv;
 
@@ -285,14 +289,28 @@ vec3 radiance( inout Ray ray ) {
 
 void main( void ) {
 	
-	vec4 befTex = texture2D( backBuffer, vUv ) * min( frame, 1.0 ) ;
+	vec2 uv = vUv * 2.0;
+	vec4 befTex = texture2D( backBuffer, uv );
+	vec4 albedo = texture2D( albedoBuffer, uv - vec2( 0.0, 1.0 ) );
+	vec4 material = texture2D( materialBuffer, uv - vec2( 1.0 ) );
+	vec4 normal = texture2D( normalBuffer, uv  );
+	vec4 depth = texture2D( depthBuffer, uv - vec2( 1.0, 0.0 ) );
 
-	Ray ray;
-	ray.origin = cameraPosition;
-	ray.direction = ( cameraMatrixWorld * cameraProjectionMatrixInverse * vec4( vUv * 2.0 - 1.0, 1.0, 1.0 ) ).xyz;
-	ray.direction = normalize( ray.direction );
+	// Ray ray;
+	// ray.origin = cameraPosition;
+	// ray.direction = ( cameraMatrixWorld * cameraProjectionMatrixInverse * vec4( vUv * 2.0 - 1.0, 1.0, 1.0 ) ).xyz;
+	// ray.direction = normalize( ray.direction );
+	// vec4 o = vec4( ( befTex.xyz + radiance( ray ) ) , 1.0 );
 
-	vec4 o = vec4( ( befTex.xyz + radiance( ray ) ) , 1.0 );
-	gl_FragColor = o;
+	vec2 mask = step( vec2( 0.5 ), vUv );
+	// vec2 mask = step( 0.5, vec2( vUv ) );
+
+	vec4 c =	albedo * ( 1.0 - mask.x ) * mask.y + 
+				material * ( mask.x ) * ( mask.y )+
+				normal * ( 1.0 - mask.x ) * ( 1.0 - mask.y ) +
+				depth * mask.x * ( 1.0 - mask.y );
+
+	gl_FragColor = vec4( c.xyz, 1.0 );
+	// gl_FragColor = vec4( mask, 1.0, 1.0 );
 
 }

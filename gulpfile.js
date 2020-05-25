@@ -32,8 +32,8 @@ function lint( cb ) {
 
 	for ( let i = 0; i < paths.length; i ++ ) {
 
-		gulp.src( paths[ i ] + '**/*.ts' )
-			.pipe( eslint( { useEslintrc: true, fix: true } ) ) // .eslintrc を参照
+		gulp.src( [ paths[ i ] + '**/*.ts', '!**/*.d.ts' ] )
+			.pipe( eslint( { useEslintrc: true, fix: true } ) )
 			.pipe( eslint.format() )
 			.pipe( gulpIf( isFixed, gulp.dest( paths[ i ] ) ) )
 			.pipe( eslint.failAfterError() );

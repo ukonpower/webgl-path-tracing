@@ -1,14 +1,15 @@
 import * as ORE from '@ore-three-ts';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { PathTracingRenderer } from './PathTracingRenderer';
+import { OrayTracingRenderer } from './OrayTracingRenderer';
 
 import Tweakpane from 'tweakpane';
+import { OrayTracingMaterial } from './OrayTracingMaterial';
 
 export class MainScene extends ORE.BaseScene {
 
 	private commonUniforms: ORE.Uniforms;
-	private pathTracingRenderer: PathTracingRenderer;
+	private pathTracingRenderer: OrayTracingRenderer;
 	private controls: OrbitControls;
 
 	private pane: Tweakpane;
@@ -26,15 +27,6 @@ export class MainScene extends ORE.BaseScene {
 			},
 			frame: {
 				value: 0
-			},
-			roughness: {
-				value: 0
-			},
-			metalness: {
-				value: 0
-			},
-			albedo: {
-				value: new THREE.Color()
 			},
 		};
 
@@ -54,7 +46,7 @@ export class MainScene extends ORE.BaseScene {
 
 		} );
 
-		this.pathTracingRenderer = new PathTracingRenderer( this.renderer, this.gProps.resizeArgs.windowPixelSize, this.commonUniforms );
+		this.pathTracingRenderer = new OrayTracingRenderer( this.renderer, this.gProps.resizeArgs.windowPixelSize, this.commonUniforms );
 
 		this.initParam();
 
@@ -70,40 +62,77 @@ export class MainScene extends ORE.BaseScene {
 			roughness: 0.1
 		};
 
-		this.pane = new Tweakpane();
+		// this.pane = new Tweakpane();
 
-		this.pane.addInput( this.param, 'metalness', {
-			min: 0, max: 1
-		} );
+		// this.pane.addInput( this.param, 'metalness', {
+		// 	min: 0, max: 1
+		// } );
 
-		this.pane.addInput( this.param, 'roughness', {
-			min: 0, max: 1
-		} );
+		// this.pane.addInput( this.param, 'roughness', {
+		// 	min: 0, max: 1
+		// } );
 
-		this.pane.addInput( this.param, 'albedo' );
+		// this.pane.addInput( this.param, 'albedo' );
 
 	}
 
 	private updatePane() {
 
-		// let keys = Object.keys( this.param );
-
-		// for ( let i = 0; i < keys.length; i++ ) {
-
-		// 	this.commonUniforms[ keys[i] ] && this.commonUniforms[ keys[i] ].value = this.param[keys[i]];
-
-		// }
-
-		this.commonUniforms.metalness.value = this.param.metalness;
-		this.commonUniforms.roughness.value = this.param.roughness;
-		this.commonUniforms.albedo.value.set( this.param.albedo );
+		// this.commonUniforms.metalness.value = this.param.metalness;
+		// this.commonUniforms.roughness.value = this.param.roughness;
+		// this.commonUniforms.albedo.value.set( this.param.albedo );
 
 	}
 
 	public initScene() {
 
-		this.camera.position.set( 0, 0.5, 3 );
+		this.camera.position.set( 2, 2, 5 );
 		this.camera.lookAt( 0, 0.4, 0 );
+
+		let mat: OrayTracingMaterial;
+		let geo: THREE.BufferGeometry;
+		let mesh: THREE.Mesh;
+
+		mat = new OrayTracingMaterial( {
+		} );
+		geo = new THREE.PlaneBufferGeometry();
+		mesh = new THREE.Mesh( geo, mat );
+		mesh.scale.setScalar( 10.0 );
+		mesh.rotateX( - Math.PI / 2 );
+		this.scene.add( mesh );
+
+		mat = new OrayTracingMaterial( {
+			albedo: new THREE.Vector3( 1, 0, 0 ),
+			roughness: 0.3,
+			metalness: 0.0
+		} );
+		geo = new THREE.BoxBufferGeometry();
+		mesh = new THREE.Mesh( geo, mat );
+		mesh.position.set( 0, 0.5, - 1 );
+		this.scene.add( mesh );
+
+		mat = new OrayTracingMaterial( {
+			albedo: new THREE.Vector3( 0, 1, 0 ),
+			roughness: 0.6,
+			metalness: 0.5
+		} );
+		geo = new THREE.SphereBufferGeometry( 0.5 );
+		mesh = new THREE.Mesh( geo, mat );
+		mesh.position.set( 1, 0.5, 1 );
+		this.scene.add( mesh );
+
+		mat = new OrayTracingMaterial( {
+			albedo: new THREE.Vector3( 0, 0, 1 ),
+			roughness: 1.0,
+			metalness: 1.0
+		} );
+		geo = new THREE.TorusBufferGeometry( 0.3, 0.15, 20, 20 );
+		mesh = new THREE.Mesh( geo, mat );
+		mesh.position.set( - 1, 0.5, 1 );
+		mesh.rotateX( Math.PI / 2 );
+		mesh.rotateY( - Math.PI / 3 );
+		this.scene.add( mesh );
+
 
 	}
 
@@ -117,7 +146,7 @@ export class MainScene extends ORE.BaseScene {
 
 		this.camera.updateMatrixWorld();
 
-		this.pathTracingRenderer.render( this.camera );
+		this.pathTracingRenderer.render( this.scene, this.camera, true );
 
 		this.commonUniforms.frame.value += 1.0;
 
