@@ -1,6 +1,8 @@
 uniform vec2 dataSize;
 uniform mat4 cameraMatrixWorld;
+uniform mat4 cameraProjectionMatrix;
 uniform mat4 cameraProjectionMatrixInverse;
+uniform mat4 projectionMatrix;
 
 uniform float roughness;
 uniform float metalness;
@@ -17,7 +19,7 @@ uniform sampler2D depthBuffer;
 
 varying vec2 vUv;
 
-#define MAX_BOUNCE 10
+#define MAX_BOUNCE 1
 
 $constants
 $random
@@ -40,6 +42,7 @@ struct Material {
 struct Intersection {
 	vec3 position;
 	vec3 normal;
+	vec3 memPos;
 	bool hit;
 	float distance;
 	Material material;
@@ -108,126 +111,91 @@ vec3 diffuse( Intersection intersection, vec2 noise ) {
 
 }
 
-void intersectionPlane( inout Intersection intersection, Ray ray, Plane plane ) {
-
-	vec3 s = ray.origin - plane.position;
-
-	float dn = dot( ray.direction, plane.normal );
-
-	if( dn != 0.0 ) {
-
-		float sn = dot( s, plane.normal );
-		float t = - ( sn / dn );
-
-		if( t > EPS && t < intersection.distance ) {
-
-			intersection.hit = true;
-			intersection.position = ray.origin + ray.direction * t;
-			intersection.distance = t;
-			intersection.normal = plane.normal;
-			intersection.material = plane.material;
-	
-		}
-		
-	}
-	
-}
-
-// http://viclw17.github.io/2018/07/16/raytracing-ray-sphere-intersection/
-
-void intersectionSphere( inout Intersection intersection, Ray ray, Sphere sphere ) {
-
-	vec3 oc = ray.origin - sphere.position;
-    float a = dot( ray.direction, ray.direction );
-    float b = 2.0 * dot( oc, ray.direction );
-    float c = dot( oc,oc ) - sphere.radius * sphere.radius;
-    float discriminant = b * b - 4.0 * a * c;
-	float t = ( -b - sqrt( discriminant ) ) / ( 2.0 * a );
-
-	if( discriminant > 0.0 && t > EPS && t < intersection.distance ) {
-
-		intersection.hit = true;
-		intersection.position = ray.origin + ray.direction * t;
-		intersection.distance = t;
-		intersection.normal = normalize( intersection.position - sphere.position );
-		intersection.material = sphere.material;
-		
-	}
-	
-}
+#define MAX_STEP 10
 
 int shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 
 	intersection.hit = false;
 	intersection.distance = INF;
+	intersection.position = ray.origin;
 
-	Plane plane;
-	plane.position = vec3( 0, 0, 0 );
-	plane.normal = normalize( vec3( 0.0, 1, 0 ) );
-	plane.material.roughness = 0.0;
-	plane.material.albedo = vec3( 1.0 );
-	plane.material.metalness = 0.0;
-	intersectionPlane( intersection, ray, plane );
+	for( int i = 0; i < MAX_STEP; i++ ) {
 
-	Sphere redSphereMetal;
-	redSphereMetal.radius = 0.5;
-	redSphereMetal.position = vec3( -0.55, 0.5, 0.45 );
-	redSphereMetal.material.albedo = vec3( 1.0, 0.0, 0.0 );
-	redSphereMetal.material.metalness = 1.0;
-	redSphereMetal.material.roughness = 0.2;
-	intersectionSphere( intersection, ray, redSphereMetal );
+		intersection.memPos = intersection.position;
+		intersection.position += ray.direction  * 2.0;
 
-	Sphere redSphere;
-	redSphere.radius = 0.5;
-	redSphere.position = vec3( 0.55, 0.5, 0.45 );
-	redSphere.material.albedo = albedo;
-	redSphere.material.metalness = metalness;
-	redSphere.material.roughness = roughness;
-	intersectionSphere( intersection, ray, redSphere );
+		vec3 middlePos = ( intersection.memPos + intersection.position ) / 2.0;
 
-	Sphere whiteSphere;
-	whiteSphere.radius = 0.5;
-	whiteSphere.position = vec3( 0.0, 0.5, -0.45 );
-	whiteSphere.material.albedo = vec3( 1.0 );
-	whiteSphere.material.metalness = 0.0;
-	whiteSphere.material.roughness = 1.0;
-	intersectionSphere( intersection, ray, whiteSphere );
+		vec4 middleClip = cameraProjectionMatrix * vec4( middlePos, 1.0 );
+		middleClip.xyz /= middleClip.w;
 
-	//light
-	Sphere lightSphere;
-	lightSphere.radius = 2.0;
-	lightSphere.position = vec3( 0.0, 5.0, 0.0 );
-	lightSphere.material.roughness = 1.0;
-	lightSphere.material.emission = vec3( 10.0 );
-	intersectionSphere( intersection, ray, lightSphere );
+		vec4 currentClip = cameraProjectionMatrix * vec4( intersection.position, 1.0 );
+		currentClip.xyz /= currentClip.w;
 
-	if( intersection.hit ) {
+		vec4 memClip = cameraProjectionMatrix * vec4( intersection.memPos, 1.0 );
+		memClip.xyz /= memClip.w;
 
-		float seed =  frame * 0.001 + float( bounce );
-		vec2 noise = vec2( random( vUv + sin( seed ) ), random( vUv - cos( seed ) ) );
+		vec4 texDepth = texture2D( depthBuffer, (middleClip.xy) * 0.5 + 0.5 );
+		float currentDepth = currentClip.z;
+		float memDepth = memClip.z;
 
-		ray.origin = intersection.position;
+		// if( i == MAX_STEP - 1 ) {
 
-		if( random( vUv * 10.0 + sin( time + float( frame ) + seed ) ) > 0.5 * ( 1.0 - intersection.material.roughness * ( 1.0 - intersection.material.metalness )  ) + intersection.material.metalness * 0.5 ) {
-			
-			ray.direction = diffuse( intersection, noise );
-			
+		// 	Material mat;
+		// 	mat.albedo = vec3( texDepth );
+
+		// 	intersection.material = mat;
+		// 	intersection.hit = false;
+
+		// 	return 0;
+
+		// }
+
+		//当たり判定
+		if( currentDepth > texDepth.x && texDepth.x > memDepth) {
+
+			Material mat;
+			mat.albedo = vec3( texDepth );
+
+			intersection.material = mat;
+			intersection.hit = false;
+
 			return 0;
-			
-		} else {
-
-			ray.direction = ggx( intersection, ray, noise );
-
-			return 1;
 
 		}
 
-	} else {
-
-		intersection.material.emission = vec3( 1.0 );
-		intersection.material.emission = vec3( 0.0 );
-
 	}
+
+	Material mat;
+	mat.albedo = vec3( 0.0, 0.0, 0.0 );
+	intersection.material = mat;
+	// if( intersection.hit ) {
+
+	// 	float seed =  frame * 0.001 + float( bounce );
+	// 	vec2 noise = vec2( random( vUv + sin( seed ) ), random( vUv - cos( seed ) ) );
+
+	// 	ray.origin = intersection.position;
+
+	// 	if( random( vUv * 10.0 + sin( time + float( frame ) + seed ) ) > 0.5 * ( 1.0 - intersection.material.roughness * ( 1.0 - intersection.material.metalness )  ) + intersection.material.metalness * 0.5 ) {
+			
+	// 		ray.direction = diffuse( intersection, noise );
+			
+	// 		return 0;
+			
+	// 	} else {
+
+	// 		ray.direction = ggx( intersection, ray, noise );
+
+	// 		return 1;
+
+	// 	}
+
+	// } else {
+
+	// 	intersection.material.emission = vec3( 1.0 );
+	// 	intersection.material.emission = vec3( 0.0 );
+
+	// }
 
 	return 0;
 
@@ -241,7 +209,6 @@ vec3 radiance( inout Ray ray ) {
 	float memMetalness[MAX_BOUNCE];
 	vec3 memAlbedo[MAX_BOUNCE];
 	vec3 memEmission[MAX_BOUNCE];
-
 	int memDir[MAX_BOUNCE];
 
 	int bounce;
@@ -262,55 +229,54 @@ vec3 radiance( inout Ray ray ) {
 		}
 	}
 
-	vec3 emission = memEmission[ MAX_BOUNCE - 1 ];
-	vec3 col;
+	return memAlbedo[0];
 
-	for ( int i = MAX_BOUNCE - 2; i >= 0 ; i-- ) {
+	// vec3 emission = memEmission[ MAX_BOUNCE - 1 ];
+	// vec3 col;
 
-		if ( memDir[ i ] > 0 ) {
+	// for ( int i = MAX_BOUNCE - 2; i >= 0 ; i-- ) {
 
-			//ggx
-			col *= mix( vec3( 1.0 ), memAlbedo[i], memMetalness[ i ] );
+	// 	if ( memDir[ i ] > 0 ) {
 
-		} else {
+	// 		//ggx
+	// 		col *= mix( vec3( 1.0 ), memAlbedo[i], memMetalness[ i ] );
+
+	// 	} else {
 			
-			//diffuse
-			col *= mix( vec3( 0.0 ), memAlbedo[i], 1.0 - memMetalness[ i ] );
+	// 		//diffuse
+	// 		col *= mix( vec3( 0.0 ), memAlbedo[i], 1.0 - memMetalness[ i ] );
 
-		}
+	// 	}
 
-		col += memEmission[ i ];
+	// 	col += memEmission[ i ];
 
-	}
+	// }
 
-	return col;
+	// return col;
 	
 }
 
 void main( void ) {
 	
-	vec2 uv = vUv * 2.0;
-	vec4 befTex = texture2D( backBuffer, uv );
-	vec4 albedo = texture2D( albedoBuffer, uv - vec2( 0.0, 1.0 ) );
-	vec4 material = texture2D( materialBuffer, uv - vec2( 1.0 ) );
-	vec4 normal = texture2D( normalBuffer, uv  );
-	vec4 depth = texture2D( depthBuffer, uv - vec2( 1.0, 0.0 ) );
+	vec4 befTex = texture2D( backBuffer, vUv ) * min( frame, 1.0 ) ;
 
-	// Ray ray;
+	vec2 uv = vUv * 4.0;
+	vec4 depth = texture2D( depthBuffer, uv );
+	vec2 mask = step( vec2( 0.25 ), vUv );
+
+	Ray ray;
 	// ray.origin = cameraPosition;
-	// ray.direction = ( cameraMatrixWorld * cameraProjectionMatrixInverse * vec4( vUv * 2.0 - 1.0, 1.0, 1.0 ) ).xyz;
-	// ray.direction = normalize( ray.direction );
-	// vec4 o = vec4( ( befTex.xyz + radiance( ray ) ) , 1.0 );
+	// ray.direction = ( cameraProjectionMatrixInverse * vec4( vUv * 2.0 - 1.0, 1.0, 1.0 ) ).xyz;
+	
+	ray.origin = vec3( 0.0 );
+	ray.direction = (  cameraProjectionMatrixInverse * vec4( vUv * 2.0 - 1.0, 1.0, 1.0 ) ).xyz;
+	ray.direction = normalize( ray.direction );
 
-	vec2 mask = step( vec2( 0.5 ), vUv );
-	// vec2 mask = step( 0.5, vec2( vUv ) );
+	vec4 o = vec4( ( befTex.xyz + radiance( ray ) ) , 1.0 );
+	gl_FragColor = o;
 
-	vec4 c =	albedo * ( 1.0 - mask.x ) * mask.y + 
-				material * ( mask.x ) * ( mask.y )+
-				normal * ( 1.0 - mask.x ) * ( 1.0 - mask.y ) +
-				depth * mask.x * ( 1.0 - mask.y );
+	gl_FragColor = mix(gl_FragColor, vec4( depth ), ( 1.0 - mask.x ) * ( 1.0 - mask.y ) );
 
-	gl_FragColor = vec4( c.xyz, 1.0 );
-	// gl_FragColor = vec4( mask, 1.0, 1.0 );
+
 
 }

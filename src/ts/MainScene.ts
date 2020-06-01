@@ -126,6 +126,7 @@ export class MainScene extends ORE.BaseScene {
 			roughness: 1.0,
 			metalness: 1.0
 		} );
+
 		geo = new THREE.TorusBufferGeometry( 0.3, 0.15, 20, 20 );
 		mesh = new THREE.Mesh( geo, mat );
 		mesh.position.set( - 1, 0.5, 1 );
@@ -146,7 +147,7 @@ export class MainScene extends ORE.BaseScene {
 
 		this.camera.updateMatrixWorld();
 
-		this.pathTracingRenderer.render( this.scene, this.camera, true );
+		this.pathTracingRenderer.render( this.scene, this.camera, this.commonUniforms.frame.value == 0 );
 
 		this.commonUniforms.frame.value += 1.0;
 

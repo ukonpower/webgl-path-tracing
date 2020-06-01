@@ -55,6 +55,9 @@ export class OrayTracingRenderer extends ORE.GPUComputationController {
 			cameraProjectionMatrixInverse: {
 				value: null
 			},
+			cameraProjectionMatrix: {
+				value: null
+			},
 		}, parentUniforms );
 
 		this.init();
@@ -127,6 +130,7 @@ export class OrayTracingRenderer extends ORE.GPUComputationController {
 
 		this.commonUniforms.backBuffer.value = this.renderResultData.buffer.texture;
 		this.commonUniforms.cameraMatrixWorld.value = camera.matrixWorld.clone();
+		this.commonUniforms.cameraProjectionMatrix.value = camera.projectionMatrix.clone();
 		this.commonUniforms.cameraProjectionMatrixInverse.value = camera.projectionMatrixInverse.clone();
 
 		this.compute( this.renderKernel, this.renderResultData, camera );
