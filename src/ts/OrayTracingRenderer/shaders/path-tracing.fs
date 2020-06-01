@@ -111,7 +111,7 @@ vec3 diffuse( Intersection intersection, vec2 noise ) {
 
 }
 
-#define MAX_STEP 10
+#define MAX_STEP 20
 
 int shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 
@@ -122,7 +122,7 @@ int shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 	for( int i = 0; i < MAX_STEP; i++ ) {
 
 		intersection.memPos = intersection.position;
-		intersection.position += ray.direction  * 2.0;
+		intersection.position += ray.direction  * 0.5;
 
 		vec3 middlePos = ( intersection.memPos + intersection.position ) / 2.0;
 
@@ -142,7 +142,7 @@ int shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 		// if( i == MAX_STEP - 1 ) {
 
 		// 	Material mat;
-		// 	mat.albedo = vec3( texDepth );
+		// 	mat.albedo = vec3( texDepth )z;
 
 		// 	intersection.material = mat;
 		// 	intersection.hit = false;
@@ -152,10 +152,10 @@ int shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 		// }
 
 		//当たり判定
-		if( currentDepth > texDepth.x && texDepth.x > memDepth) {
+		if( currentDepth > texDepth.x && texDepth.x > memDepth && texDepth.x != 0.0 ) {
 
 			Material mat;
-			mat.albedo = vec3( texDepth );
+			mat.albedo = vec3( middleClip.z );
 
 			intersection.material = mat;
 			intersection.hit = false;
@@ -272,10 +272,11 @@ void main( void ) {
 	ray.direction = (  cameraProjectionMatrixInverse * vec4( vUv * 2.0 - 1.0, 1.0, 1.0 ) ).xyz;
 	ray.direction = normalize( ray.direction );
 
-	vec4 o = vec4( ( befTex.xyz + radiance( ray ) ) , 1.0 );
+	float clip = ( 1.0 - mask.x ) * ( 1.0 - mask.y );
+	vec4 o = vec4( ( befTex.xyz + radiance( ray ) ) , 1.0 ) * ( 1.0 - clip );
 	gl_FragColor = o;
 
-	gl_FragColor = mix(gl_FragColor, vec4( depth ), ( 1.0 - mask.x ) * ( 1.0 - mask.y ) );
+	gl_FragColor += mix( vec4(0.0), vec4( depth ), clip ) + befTex * clip;
 
 
 
