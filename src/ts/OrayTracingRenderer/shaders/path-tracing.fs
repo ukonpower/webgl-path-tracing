@@ -13,6 +13,7 @@ uniform float frame;
 
 uniform sampler2D backBuffer;
 uniform sampler2D albedoBuffer;
+uniform sampler2D emissionBuffer;
 uniform sampler2D materialBuffer;
 uniform sampler2D normalBuffer;
 uniform sampler2D depthBuffer;

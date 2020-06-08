@@ -6,6 +6,7 @@ import orayFrag from './shaders/oray.fs';
 
 export declare interface OrayShaderMaterialParam extends THREE.ShaderMaterialParameters {
 	albedo?: THREE.Vector3;
+	emission?: THREE.Vector3
 	roughness?: number;
 	metalness?: number;
 }
@@ -30,6 +31,7 @@ export class OrayTracingMaterial extends THREE.ShaderMaterial {
 		param.uniforms.renderType = { value: 0 };
 
 		param.uniforms.albedo = param.uniforms.albedo || { value: param.albedo || new THREE.Vector3( 1, 1, 1 ) };
+		param.uniforms.emission = param.uniforms.emission || { value: param.emission || new THREE.Vector3() };
 		param.uniforms.roughness = param.uniforms.roughness || { value: param.roughness != null ? param.roughness : 0.5 };
 		param.uniforms.metalness = param.uniforms.metalness || { value: param.metalness != null ? param.metalness : 0.5 };
 
@@ -40,6 +42,12 @@ export class OrayTracingMaterial extends THREE.ShaderMaterial {
 	public set albedo( value: THREE.Vector3 ) {
 
 		this.uniforms.albedo.value.copy( value );
+
+	}
+
+	public set emission( value: THREE.Vector3 ) {
+
+		this.uniforms.emission.value = value;
 
 	}
 

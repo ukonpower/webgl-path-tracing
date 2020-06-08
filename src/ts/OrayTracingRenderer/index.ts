@@ -7,6 +7,7 @@ import { OrayTracingMaterial } from '../OrayTracingMaterial';
 
 declare interface OrayRenderTargets {
 	albedo: ORE.GPUcomputationData;
+	emission: ORE.GPUcomputationData;
 	material: ORE.GPUcomputationData;
 	normal: ORE.GPUcomputationData;
 	depth: ORE.GPUcomputationData;
@@ -35,6 +36,9 @@ export class OrayTracingRenderer extends ORE.GPUComputationController {
 				value: null
 			},
 			albedoBuffer: {
+				value: null
+			},
+			emissionBuffer: {
 				value: null
 			},
 			materialBuffer: {
@@ -72,6 +76,9 @@ export class OrayTracingRenderer extends ORE.GPUComputationController {
 
 		this.orayRenderTargets = {
 			albedo: this.createData( {
+				depthBuffer: true
+			} ),
+			emission: this.createData( {
 				depthBuffer: true
 			} ),
 			material: this.createData( {
