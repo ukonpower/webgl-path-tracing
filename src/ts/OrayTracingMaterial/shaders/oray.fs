@@ -1,5 +1,6 @@
 uniform float renderType;
 uniform vec3 albedo;
+uniform vec3 emission;
 uniform float roughness;
 uniform float metalness;
 
@@ -17,15 +18,20 @@ void main( void ) {
 		
 	} else if ( renderType == 1.0 ) {
 
+		//emission
+		gl_FragColor = vec4( emission, 0.0 );
+		
+	} else if ( renderType == 2.0 ) {
+
 		//material
 		gl_FragColor = vec4( roughness, metalness, 0.0, 0.0 );
 		
-	} else if ( renderType == 2.0 ) {
+	} else if ( renderType == 3.0 ) {
 
 		//normal
 		gl_FragColor = vec4( vNormal * 0.5 + 0.5, 0.0 );
 		
-	} else if ( renderType == 3.0 ) {
+	} else if ( renderType == 4.0 ) {
 
 		//depth
 		gl_FragColor = vec4( ( vPos.z / vPos.w ) );
