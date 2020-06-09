@@ -20,7 +20,7 @@ uniform sampler2D depthBuffer;
 
 varying vec2 vUv;
 
-#define MAX_BOUNCE 1
+#define MAX_BOUNCE 20
 
 $constants
 $random
@@ -112,7 +112,7 @@ vec3 diffuse( Intersection intersection, vec2 noise ) {
 
 }
 
-#define MAX_STEP 20
+#define MAX_STEP 30
 
 int shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 
@@ -136,73 +136,68 @@ int shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 		vec4 memClip = cameraProjectionMatrix * vec4( intersection.memPos, 1.0 );
 		memClip.xyz /= memClip.w;
 
-		vec4 texDepth = texture2D( depthBuffer, (middleClip.xy) * 0.5 + 0.5 );
+		vec2 pickUV = (middleClip.xy) * 0.5 + 0.5;
+		vec4 texDepth = texture2D( depthBuffer, pickUV );
 		float currentDepth = currentClip.z;
 		float memDepth = memClip.z;
-
-		// if( i == MAX_STEP - 1 ) {
-
-		// 	Material mat;
-		// 	mat.albedo = vec3( texDepth )z;
-
-		// 	intersection.material = mat;
-		// 	intersection.hit = false;
-
-		// 	return 0;
-
-		// }
 
 		//当たり判定
 		if( currentDepth > texDepth.x && texDepth.x > memDepth && texDepth.x != 0.0 ) {
 
 			Material mat;
-			mat.albedo = vec3( middleClip.z );
+			mat.albedo = texture2D( albedoBuffer, pickUV ).xyz;
+			mat.emission = texture2D( emissionBuffer, pickUV ).xyz;
+			vec4 matTex = texture2D( materialBuffer, pickUV );
+			mat.roughness = matTex.x;
+			mat.metalness = matTex.y;
 
 			intersection.material = mat;
-			intersection.hit = false;
+			intersection.position = middlePos.xyz;
+			intersection.normal = normalize( texture2D( normalBuffer, pickUV ).xyz * 2.0 - 1.0 );
+			// intersection.normal = vec3( 0.0, 1.0, 0.0 );
+			intersection.hit = true;
 
-			return 0;
+			break;
 
 		}
 
 	}
 
-	Material mat;
-	mat.albedo = vec3( 0.0, 0.0, 0.0 );
-	intersection.material = mat;
-	// if( intersection.hit ) {
 
-	// 	float seed =  frame * 0.001 + float( bounce );
-	// 	vec2 noise = vec2( random( vUv + sin( seed ) ), random( vUv - cos( seed ) ) );
 
-	// 	ray.origin = intersection.position;
+	if( intersection.hit ) {
 
-	// 	if( random( vUv * 10.0 + sin( time + float( frame ) + seed ) ) > 0.5 * ( 1.0 - intersection.material.roughness * ( 1.0 - intersection.material.metalness )  ) + intersection.material.metalness * 0.5 ) {
+		float seed =  frame * 0.001 + float( bounce );
+		vec2 noise = vec2( random( vUv + sin( seed ) ), random( vUv - cos( seed ) ) );
+
+		ray.origin = intersection.position;
+
+		if( random( vUv * 10.0 + sin( time + float( frame ) + seed ) ) > 0.5 * ( 1.0 - intersection.material.roughness * ( 1.0 - intersection.material.metalness )  ) + intersection.material.metalness * 0.5 ) {
 			
-	// 		ray.direction = diffuse( intersection, noise );
+			ray.direction = diffuse( intersection, noise );
 			
-	// 		return 0;
+			return 0;
 			
-	// 	} else {
+		} else {
 
-	// 		ray.direction = ggx( intersection, ray, noise );
+			ray.direction = ggx( intersection, ray, noise );
 
-	// 		return 1;
+			return 1;
 
-	// 	}
+		}
 
-	// } else {
+	} else {
 
-	// 	intersection.material.emission = vec3( 1.0 );
-	// 	intersection.material.emission = vec3( 0.0 );
+		intersection.material.emission = vec3( 1.0 );
 
-	// }
+	}
 
 	return 0;
 
 }
 
 vec3 radiance( inout Ray ray ) {
+
 
 	Intersection intersection;
 
@@ -230,30 +225,29 @@ vec3 radiance( inout Ray ray ) {
 		}
 	}
 
-	return memAlbedo[0];
+	vec3 emission = memEmission[ MAX_BOUNCE - 1 ];
+	vec3 col;
 
-	// vec3 emission = memEmission[ MAX_BOUNCE - 1 ];
-	// vec3 col;
+	for ( int i = MAX_BOUNCE - 2; i >= 0 ; i-- ) {
 
-	// for ( int i = MAX_BOUNCE - 2; i >= 0 ; i-- ) {
+		if ( memDir[ i ] > 0 ) {
 
-	// 	if ( memDir[ i ] > 0 ) {
+			//ggx
+			col *= mix( vec3( 1.0 ), memAlbedo[i], memMetalness[ i ] );
 
-	// 		//ggx
-	// 		col *= mix( vec3( 1.0 ), memAlbedo[i], memMetalness[ i ] );
-
-	// 	} else {
+		} else {
 			
-	// 		//diffuse
-	// 		col *= mix( vec3( 0.0 ), memAlbedo[i], 1.0 - memMetalness[ i ] );
+			//diffuse
+			col *= mix( vec3( 0.0 ), memAlbedo[i], 1.0 - memMetalness[ i ] );
 
-	// 	}
+		}
 
-	// 	col += memEmission[ i ];
+		col += memEmission[ i ];
 
-	// }
+	}
 
-	// return col;
+	return col;
+	
 	
 }
 
@@ -262,19 +256,20 @@ void main( void ) {
 	vec4 befTex = texture2D( backBuffer, vUv ) * min( frame, 1.0 ) ;
 
 	vec2 uv = vUv * 4.0;
-	vec4 depth = texture2D( depthBuffer, uv );
+	vec4 depth = texture2D( normalBuffer, uv );
 	vec2 mask = step( vec2( 0.25 ), vUv );
 
 	Ray ray;
 	// ray.origin = cameraPosition;
 	// ray.direction = ( cameraProjectionMatrixInverse * vec4( vUv * 2.0 - 1.0, 1.0, 1.0 ) ).xyz;
 	
-	ray.origin = vec3( 0.0 );
+	ray.origin = vec3( 0.0, 0.0, 0.0 );
 	ray.direction = (  cameraProjectionMatrixInverse * vec4( vUv * 2.0 - 1.0, 1.0, 1.0 ) ).xyz;
 	ray.direction = normalize( ray.direction );
 
 	float clip = ( 1.0 - mask.x ) * ( 1.0 - mask.y );
 	vec4 o = vec4( ( befTex.xyz + radiance( ray ) ) , 1.0 ) * ( 1.0 - clip );
+	// vec4 o = vec4( ( befTex.xyz + vec3( ray.direction.xyz ) ) , 1.0 ) * ( 1.0 - clip );
 	gl_FragColor = o;
 
 	gl_FragColor += mix( vec4(0.0), vec4( depth ), clip ) + befTex * clip;

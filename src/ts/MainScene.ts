@@ -6,6 +6,8 @@ import { OrayTracingRenderer } from './OrayTracingRenderer';
 import Tweakpane from 'tweakpane';
 import { OrayTracingMaterial } from './OrayTracingMaterial';
 
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+
 export class MainScene extends ORE.BaseScene {
 
 	private commonUniforms: ORE.Uniforms;
@@ -50,7 +52,16 @@ export class MainScene extends ORE.BaseScene {
 
 		this.initParam();
 
-		this.initScene();
+		let gltfLoader = new GLTFLoader();
+
+		gltfLoader.load( './assets/webgl-path-tracing.glb', ( gltf ) => {
+
+			this.scene.add( gltf.scene );
+
+			this.initScene();
+
+		} );
+
 
 	}
 
@@ -93,47 +104,40 @@ export class MainScene extends ORE.BaseScene {
 		let geo: THREE.BufferGeometry;
 		let mesh: THREE.Mesh;
 
-		mat = new OrayTracingMaterial( {
+		( this.scene.getObjectByName( 'Plane' ) as THREE.Mesh ).material = new OrayTracingMaterial( {
+			roughness: 0.2,
+			metalness: 0.1
 		} );
-		geo = new THREE.PlaneBufferGeometry();
-		mesh = new THREE.Mesh( geo, mat );
-		mesh.scale.setScalar( 10.0 );
-		mesh.rotateX( - Math.PI / 2 );
-		this.scene.add( mesh );
 
-		mat = new OrayTracingMaterial( {
+		( this.scene.getObjectByName( 'Suzanne_0' ) as THREE.Mesh ).material = new OrayTracingMaterial( {
 			albedo: new THREE.Vector3( 1, 0, 0 ),
 			roughness: 0.3,
-			metalness: 0.0
+			metalness: 0.0,
 		} );
-		geo = new THREE.BoxBufferGeometry();
-		mesh = new THREE.Mesh( geo, mat );
-		mesh.position.set( 0, 0.5, - 1 );
-		this.scene.add( mesh );
 
-		mat = new OrayTracingMaterial( {
+		( this.scene.getObjectByName( 'Suzanne_1' ) as THREE.Mesh ).material = new OrayTracingMaterial( {
 			albedo: new THREE.Vector3( 0, 1, 0 ),
 			roughness: 0.6,
 			metalness: 0.5
 		} );
-		geo = new THREE.SphereBufferGeometry( 0.5 );
-		mesh = new THREE.Mesh( geo, mat );
-		mesh.position.set( 1, 0.5, 1 );
-		this.scene.add( mesh );
 
-		mat = new OrayTracingMaterial( {
+		( this.scene.getObjectByName( 'Cube' ) as THREE.Mesh ).material = new OrayTracingMaterial( {
 			albedo: new THREE.Vector3( 0, 0, 1 ),
+			roughness: 1.0,
+			metalness: 0.5
+		} );
+
+		( this.scene.getObjectByName( 'Icosphere' ) as THREE.Mesh ).material = new OrayTracingMaterial( {
+			albedo: new THREE.Vector3( 1, 0, 1 ),
+			roughness: 1.0,
+			metalness: 0.5
+		} );
+
+		( this.scene.getObjectByName( 'Torus' ) as THREE.Mesh ).material = new OrayTracingMaterial( {
+			albedo: new THREE.Vector3( 0, 1, 0 ),
 			roughness: 1.0,
 			metalness: 1.0
 		} );
-
-		geo = new THREE.TorusBufferGeometry( 0.3, 0.15, 20, 20 );
-		mesh = new THREE.Mesh( geo, mat );
-		mesh.position.set( - 1, 0.5, 1 );
-		mesh.rotateX( Math.PI / 2 );
-		mesh.rotateY( - Math.PI / 3 );
-		this.scene.add( mesh );
-
 
 	}
 
