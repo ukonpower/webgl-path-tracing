@@ -105,7 +105,7 @@ export class MainScene extends ORE.BaseScene {
 		let mesh: THREE.Mesh;
 
 		( this.scene.getObjectByName( 'Plane' ) as THREE.Mesh ).material = new OrayTracingMaterial( {
-			roughness: 0.2,
+			roughness: 0.1,
 			metalness: 0.1
 		} );
 

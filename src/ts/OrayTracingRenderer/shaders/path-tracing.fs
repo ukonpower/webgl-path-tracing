@@ -18,6 +18,7 @@ uniform sampler2D materialBuffer;
 uniform sampler2D normalBuffer;
 uniform sampler2D depthBuffer;
 
+bool debug = false;
 varying vec2 vUv;
 
 #define MAX_BOUNCE 20
@@ -112,7 +113,7 @@ vec3 diffuse( Intersection intersection, vec2 noise ) {
 
 }
 
-#define MAX_STEP 30
+#define MAX_STEP 50
 
 int shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 
@@ -138,11 +139,12 @@ int shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 
 		vec2 pickUV = (middleClip.xy) * 0.5 + 0.5;
 		vec4 texDepth = texture2D( depthBuffer, pickUV );
+		float middleDepth = texDepth.x / texDepth.w;
 		float currentDepth = currentClip.z;
 		float memDepth = memClip.z;
 
 		//当たり判定
-		if( currentDepth > texDepth.x && texDepth.x > memDepth && texDepth.x != 0.0 ) {
+		if( currentDepth > middleDepth && middleDepth > memDepth && middleDepth != 0.0 ) {
 
 			Material mat;
 			mat.albedo = texture2D( albedoBuffer, pickUV ).xyz;
@@ -151,11 +153,19 @@ int shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 			mat.roughness = matTex.x;
 			mat.metalness = matTex.y;
 
-			intersection.material = mat;
-			intersection.position = middlePos.xyz;
 			intersection.normal = normalize( texture2D( normalBuffer, pickUV ).xyz * 2.0 - 1.0 );
-			// intersection.normal = vec3( 0.0, 1.0, 0.0 );
+
+			vec3 p = ( cameraProjectionMatrixInverse * vec4( (pickUV * 2.0 - 1.0) * texDepth.w, middleDepth, texDepth.w ) ).xyz;
+			intersection.position = p;
+			
+			// mat.albedo = vec3( smoothstep( 7.0, 7.0, -p.z ) );
+			// mat.albedo = vec3( intersection.normal );
+			// mat.albedo = vec3( p.x, p.y, -p.z );
+			intersection.material = mat;
+
 			intersection.hit = true;
+
+			// debug = true;
 
 			break;
 
@@ -246,6 +256,12 @@ vec3 radiance( inout Ray ray ) {
 
 	}
 
+	if( debug ) {
+
+		col = memAlbedo[0];
+		
+	}
+
 	return col;
 	
 	
@@ -264,7 +280,7 @@ void main( void ) {
 	// ray.direction = ( cameraProjectionMatrixInverse * vec4( vUv * 2.0 - 1.0, 1.0, 1.0 ) ).xyz;
 	
 	ray.origin = vec3( 0.0, 0.0, 0.0 );
-	ray.direction = (  cameraProjectionMatrixInverse * vec4( vUv * 2.0 - 1.0, 1.0, 1.0 ) ).xyz;
+	ray.direction = ( cameraProjectionMatrixInverse * vec4( vUv * 2.0 - 1.0, 1.0, 1.0 ) ).xyz;
 	ray.direction = normalize( ray.direction );
 
 	float clip = ( 1.0 - mask.x ) * ( 1.0 - mask.y );

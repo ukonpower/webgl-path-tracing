@@ -34,9 +34,10 @@ void main( void ) {
 	} else if ( renderType == 4.0 ) {
 
 		//depth
-		gl_FragColor = vec4( ( ( vPos.z / vPos.w ) + 1.0 ) / 2.0 );
+		// gl_FragColor = vec4( vec3( ( ( vPos.z / vPos.w ) + 1.0 ) / 2.0 ), vPos.w  );
+		gl_FragColor = vec4( vec3( vPos.z ), vPos.w  );
 		
 	}
 
-
+	
 }
