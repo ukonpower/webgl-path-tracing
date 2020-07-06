@@ -113,7 +113,7 @@ vec3 diffuse( Intersection intersection, vec2 noise ) {
 
 }
 
-#define MAX_STEP 50
+#define MAX_STEP 40
 
 int shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 
@@ -124,7 +124,7 @@ int shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 	for( int i = 0; i < MAX_STEP; i++ ) {
 
 		intersection.memPos = intersection.position;
-		intersection.position += ray.direction  * 0.5;
+		intersection.position += ray.direction * 0.5;
 
 		vec3 middlePos = ( intersection.memPos + intersection.position ) / 2.0;
 
@@ -144,7 +144,8 @@ int shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 		float memDepth = memClip.z;
 
 		//当たり判定
-		if( currentDepth > middleDepth && middleDepth > memDepth && middleDepth != 0.0 ) {
+		// if( (currentDepth >= middleDepth && middleDepth >= memDepth && middleDepth != 0.0 && bounce != 2 ) || ( bounce == 1 && i == 0 ) ) {
+		if((( currentDepth >= middleDepth && middleDepth >= memDepth ) || ( currentDepth >= middleDepth && middleDepth <= memDepth ) ) && middleDepth != 0.0 ) {
 
 			Material mat;
 			mat.albedo = texture2D( albedoBuffer, pickUV ).xyz;
@@ -157,22 +158,24 @@ int shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 
 			vec3 p = ( cameraProjectionMatrixInverse * vec4( (pickUV * 2.0 - 1.0) * texDepth.w, middleDepth, texDepth.w ) ).xyz;
 			intersection.position = p;
-			
-			// mat.albedo = vec3( smoothstep( 7.0, 7.0, -p.z ) );
-			// mat.albedo = vec3( intersection.normal );
-			// mat.albedo = vec3( p.x, p.y, -p.z );
 			intersection.material = mat;
 
 			intersection.hit = true;
 
-			// debug = true;
+			if( false ) {
+
+				debug = true;
+				#define DEBUG_NUM 1
+				intersection.material.albedo = vec3( currentDepth >= middleDepth, middleDepth >= memDepth, 0.0 );
+				
+
+			}
 
 			break;
 
 		}
 
 	}
-
 
 
 	if( intersection.hit ) {
@@ -191,7 +194,6 @@ int shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 		} else {
 
 			ray.direction = ggx( intersection, ray, noise );
-
 			return 1;
 
 		}
@@ -258,7 +260,7 @@ vec3 radiance( inout Ray ray ) {
 
 	if( debug ) {
 
-		col = memAlbedo[0];
+		col = memAlbedo[DEBUG_NUM];
 		
 	}
 

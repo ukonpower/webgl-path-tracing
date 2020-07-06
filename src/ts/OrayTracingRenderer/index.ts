@@ -76,19 +76,19 @@ export class OrayTracingRenderer extends ORE.GPUComputationController {
 
 		this.orayRenderTargets = {
 			albedo: this.createData( {
-				depthBuffer: true
+				depthBuffer: true,
 			} ),
 			emission: this.createData( {
-				depthBuffer: true
+				depthBuffer: true,
 			} ),
 			material: this.createData( {
-				depthBuffer: true
+				depthBuffer: true,
 			} ),
 			normal: this.createData( {
-				depthBuffer: true
+				depthBuffer: true,
 			} ),
 			depth: this.createData( {
-				depthBuffer: true
+				depthBuffer: true,
 			} ),
 		};
 
