@@ -153,7 +153,7 @@ int shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 		// if( (currentDepth >= middleDepthFront && middleDepthFront >= memDepth && middleDepthFront != 0.0 && bounce != 2 ) || ( bounce == 1 && i == 0 ) ) {
 		if(
 			(( currentDepth >= middleDepthFront && middleDepthFront >= memDepth ) || 
-			( ( currentDepth >= middleDepthFront && middleDepthFront <= memDepth ) ) && ( currentDepth <= middleDepthBack && middleDepthBack >= memDepth ) ) &&
+			( currentDepth >= middleDepthFront && memDepth <= middleDepthBack ) )&&
 			middleDepthFront != 0.0 
 		) {
 

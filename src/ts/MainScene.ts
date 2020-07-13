@@ -48,7 +48,7 @@ export class MainScene extends ORE.BaseScene {
 
 		} );
 
-		this.pathTracingRenderer = new OrayTracingRenderer( this.renderer, this.gProps.resizeArgs.windowPixelSize, this.commonUniforms );
+		this.pathTracingRenderer = new OrayTracingRenderer( this.renderer, this.gProps.resizeArgs.windowPixelSize.multiplyScalar( 1.0 ), this.commonUniforms );
 
 		this.initParam();
 
@@ -97,8 +97,11 @@ export class MainScene extends ORE.BaseScene {
 
 	public initScene() {
 
-		this.camera.position.set( 2, 2, 5 );
-		this.camera.lookAt( 0, 0.4, 0 );
+		// this.camera.position.set( 0, 2, 5 );
+		// this.controls.target = new THREE.Vector3( - 0.2, 0.3, 0 );
+
+		this.camera.position.set( - 2, 3, 6 );
+		this.controls.target = new THREE.Vector3( - 0.2, 0.3, 0 );
 
 		let mat: OrayTracingMaterial;
 		let geo: THREE.BufferGeometry;
@@ -124,7 +127,7 @@ export class MainScene extends ORE.BaseScene {
 		( this.scene.getObjectByName( 'Cube' ) as THREE.Mesh ).material = new OrayTracingMaterial( {
 			albedo: new THREE.Vector3( 0, 0, 1 ),
 			roughness: 1.0,
-			metalness: 0.5
+			metalness: 0.5,
 		} );
 
 		( this.scene.getObjectByName( 'Icosphere' ) as THREE.Mesh ).material = new OrayTracingMaterial( {
