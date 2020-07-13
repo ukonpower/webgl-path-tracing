@@ -11,6 +11,8 @@ declare interface OrayRenderTargets {
 	material: ORE.GPUcomputationData;
 	normal: ORE.GPUcomputationData;
 	depth: ORE.GPUcomputationData;
+	backNormal: ORE.GPUcomputationData;
+	backDepth: ORE.GPUcomputationData;
 }
 
 export class OrayTracingRenderer extends ORE.GPUComputationController {
@@ -48,6 +50,12 @@ export class OrayTracingRenderer extends ORE.GPUComputationController {
 				value: null
 			},
 			depthBuffer: {
+				value: null
+			},
+			backNormalBuffer: {
+				value: null
+			},
+			backDepthBuffer: {
 				value: null
 			},
 			renderResult: {
@@ -88,6 +96,12 @@ export class OrayTracingRenderer extends ORE.GPUComputationController {
 				depthBuffer: true,
 			} ),
 			depth: this.createData( {
+				depthBuffer: true,
+			} ),
+			backNormal: this.createData( {
+				depthBuffer: true,
+			} ),
+			backDepth: this.createData( {
 				depthBuffer: true,
 			} ),
 		};

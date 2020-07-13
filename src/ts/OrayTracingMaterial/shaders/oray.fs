@@ -26,12 +26,12 @@ void main( void ) {
 		//material
 		gl_FragColor = vec4( roughness, metalness, 0.0, 0.0 );
 		
-	} else if ( renderType == 3.0 ) {
+	} else if ( renderType == 3.0 || renderType == 5.0 ) {
 
 		//normal
 		gl_FragColor = vec4( vNormal * 0.5 + 0.5, 0.0 );
 		
-	} else if ( renderType == 4.0 ) {
+	} else if ( renderType == 4.0 || renderType == 6.0 ) {
 
 		//depth
 		// gl_FragColor = vec4( vec3( ( ( vPos.z / vPos.w ) + 1.0 ) / 2.0 ), vPos.w  );

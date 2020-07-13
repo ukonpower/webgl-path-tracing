@@ -73,6 +73,8 @@ export class OrayTracingMaterial extends THREE.ShaderMaterial {
 
 		this.uniforms.renderType.value = type;
 
+		this.side = type >= 5 ? THREE.BackSide : THREE.FrontSide;
+
 	}
 
 	public get isOrayTracingMaterial() {

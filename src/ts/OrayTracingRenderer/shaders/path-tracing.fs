@@ -17,6 +17,9 @@ uniform sampler2D emissionBuffer;
 uniform sampler2D materialBuffer;
 uniform sampler2D normalBuffer;
 uniform sampler2D depthBuffer;
+uniform sampler2D backNormalBuffer;
+uniform sampler2D backDepthBuffer;
+
 
 bool debug = false;
 varying vec2 vUv;
@@ -138,14 +141,21 @@ int shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 		memClip.xyz /= memClip.w;
 
 		vec2 pickUV = (middleClip.xy) * 0.5 + 0.5;
-		vec4 texDepth = texture2D( depthBuffer, pickUV );
-		float middleDepth = texDepth.x / texDepth.w;
+		vec4 texDepthFront = texture2D( depthBuffer, pickUV );
+		vec4 texDepthBack = texture2D( backDepthBuffer, pickUV );
+
+		float middleDepthFront = texDepthFront.x / texDepthFront.w;
+		float middleDepthBack = texDepthBack.x / texDepthBack.w;
 		float currentDepth = currentClip.z;
 		float memDepth = memClip.z;
 
 		//当たり判定
-		// if( (currentDepth >= middleDepth && middleDepth >= memDepth && middleDepth != 0.0 && bounce != 2 ) || ( bounce == 1 && i == 0 ) ) {
-		if((( currentDepth >= middleDepth && middleDepth >= memDepth ) || ( currentDepth >= middleDepth && middleDepth <= memDepth ) ) && middleDepth != 0.0 ) {
+		// if( (currentDepth >= middleDepthFront && middleDepthFront >= memDepth && middleDepthFront != 0.0 && bounce != 2 ) || ( bounce == 1 && i == 0 ) ) {
+		if(
+			(( currentDepth >= middleDepthFront && middleDepthFront >= memDepth ) || 
+			( ( currentDepth >= middleDepthFront && middleDepthFront <= memDepth ) ) && ( currentDepth <= middleDepthBack && middleDepthBack >= memDepth ) ) &&
+			middleDepthFront != 0.0 
+		) {
 
 			Material mat;
 			mat.albedo = texture2D( albedoBuffer, pickUV ).xyz;
@@ -156,7 +166,7 @@ int shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 
 			intersection.normal = normalize( texture2D( normalBuffer, pickUV ).xyz * 2.0 - 1.0 );
 
-			vec3 p = ( cameraProjectionMatrixInverse * vec4( (pickUV * 2.0 - 1.0) * texDepth.w, middleDepth, texDepth.w ) ).xyz;
+			vec3 p = ( cameraProjectionMatrixInverse * vec4( (pickUV * 2.0 - 1.0) * texDepthFront.w, middleDepthFront, texDepthFront.w ) ).xyz;
 			intersection.position = p;
 			intersection.material = mat;
 
@@ -166,7 +176,7 @@ int shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 
 				debug = true;
 				#define DEBUG_NUM 1
-				intersection.material.albedo = vec3( currentDepth >= middleDepth, middleDepth >= memDepth, 0.0 );
+				intersection.material.albedo = vec3( currentDepth >= middleDepthFront, middleDepthFront >= memDepth, 0.0 );
 				
 
 			}
@@ -274,7 +284,7 @@ void main( void ) {
 	vec4 befTex = texture2D( backBuffer, vUv ) * min( frame, 1.0 ) ;
 
 	vec2 uv = vUv * 4.0;
-	vec4 depth = texture2D( normalBuffer, uv );
+	vec4 depth = texture2D( backNormalBuffer, uv );
 	vec2 mask = step( vec2( 0.25 ), vUv );
 
 	Ray ray;
@@ -291,7 +301,5 @@ void main( void ) {
 	gl_FragColor = o;
 
 	gl_FragColor += mix( vec4(0.0), vec4( depth ), clip ) + befTex * clip;
-
-
 
 }
