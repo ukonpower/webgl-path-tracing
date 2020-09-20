@@ -47,7 +47,7 @@ struct Material {
 struct Intersection {
 	vec3 position;
 	vec3 normal;
-	vec3 memPos;
+	vec3 nextPosition;
 	bool hit;
 	float distance;
 	Material material;
@@ -125,36 +125,30 @@ int shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 	intersection.position = ray.origin;
 
 	for( int i = 0; i < MAX_STEP; i++ ) {
+		
+		intersection.nextPosition = intersection.position + ray.direction * 0.5;;
 
-		intersection.memPos = intersection.position;
-		intersection.position += ray.direction * 0.5;
+		vec4 startPosClip = cameraProjectionMatrix * vec4( intersection.position, 1.0 );
+		startPosClip /= startPosClip.w;
 
-		vec3 middlePos = ( intersection.memPos + intersection.position ) / 2.0;
+		vec4 nextPosClip = cameraProjectionMatrix * vec4( intersection.nextPosition, 1.0 );
+		nextPosClip /= nextPosClip.w;
 
-		vec4 middleClip = cameraProjectionMatrix * vec4( middlePos, 1.0 );
-		middleClip.xyz /= middleClip.w;
-
-		vec4 currentClip = cameraProjectionMatrix * vec4( intersection.position, 1.0 );
-		currentClip.xyz /= currentClip.w;
-
-		vec4 memClip = cameraProjectionMatrix * vec4( intersection.memPos, 1.0 );
-		memClip.xyz /= memClip.w;
-
-		vec2 pickUV = (middleClip.xy) * 0.5 + 0.5;
+		vec2 pickUV = nextPosClip.xy * 0.5 + 0.5;
+		
 		vec4 texDepthFront = texture2D( depthBuffer, pickUV );
+		float nextBufferDepthFront = texDepthFront.x / texDepthFront.w;
+
 		vec4 texDepthBack = texture2D( backDepthBuffer, pickUV );
+		float nextBufferDepthBack = texDepthBack.x / texDepthBack.w;
+		
+		float nextPosDepth = nextPosClip.z;
+		float startPosDepth = startPosClip.z;
 
-		float middleDepthFront = texDepthFront.x / texDepthFront.w;
-		float middleDepthBack = texDepthBack.x / texDepthBack.w;
-		float currentDepth = currentClip.z;
-		float memDepth = memClip.z;
-
-		//当たり判定
-		// if( (currentDepth >= middleDepthFront && middleDepthFront >= memDepth && middleDepthFront != 0.0 && bounce != 2 ) || ( bounce == 1 && i == 0 ) ) {
 		if(
-			(( currentDepth >= middleDepthFront && middleDepthFront >= memDepth ) || 
-			( currentDepth >= middleDepthFront && memDepth <= middleDepthBack ) )&&
-			middleDepthFront != 0.0 
+			(( nextPosDepth >= nextBufferDepthFront && nextBufferDepthFront >= startPosDepth ) || 
+			( nextPosDepth >= nextBufferDepthFront && startPosDepth <= nextBufferDepthBack ) ) &&
+			nextBufferDepthFront != 0.0 
 		) {
 
 			Material mat;
@@ -166,7 +160,7 @@ int shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 
 			intersection.normal = normalize( texture2D( normalBuffer, pickUV ).xyz * 2.0 - 1.0 );
 
-			vec3 p = ( cameraProjectionMatrixInverse * vec4( (pickUV * 2.0 - 1.0) * texDepthFront.w, middleDepthFront, texDepthFront.w ) ).xyz;
+			vec3 p = ( cameraProjectionMatrixInverse * vec4( (pickUV * 2.0 - 1.0) * texDepthFront.w, nextBufferDepthFront, texDepthFront.w ) ).xyz;
 			intersection.position = p;
 			intersection.material = mat;
 
@@ -176,14 +170,15 @@ int shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 
 				debug = true;
 				#define DEBUG_NUM 1
-				intersection.material.albedo = vec3( currentDepth >= middleDepthFront, middleDepthFront >= memDepth, 0.0 );
-				
+				// intersection.material.albedo = vec3( currentDepth >= nextBufferDepthFront, nextBufferDepthFront >= memDepth, 0.0 );
 
 			}
 
 			break;
 
 		}
+
+		intersection.position = intersection.nextPosition;
 
 	}
 
@@ -220,10 +215,8 @@ int shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 
 vec3 radiance( inout Ray ray ) {
 
-
 	Intersection intersection;
 
-	// Material memMaterial[MAX_BOUNCE];
 	float memMetalness[MAX_BOUNCE];
 	vec3 memAlbedo[MAX_BOUNCE];
 	vec3 memEmission[MAX_BOUNCE];
@@ -250,7 +243,7 @@ vec3 radiance( inout Ray ray ) {
 	vec3 emission = memEmission[ MAX_BOUNCE - 1 ];
 	vec3 col;
 
-	for ( int i = MAX_BOUNCE - 2; i >= 0 ; i-- ) {
+	for ( int i = MAX_BOUNCE -1; i >= 0 ; i-- ) {
 
 		if ( memDir[ i ] > 0 ) {
 
