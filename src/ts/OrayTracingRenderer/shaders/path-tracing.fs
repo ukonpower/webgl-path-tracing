@@ -294,10 +294,6 @@ void main( void ) {
 	
 	vec4 befTex = texture2D( backBuffer, vUv ) * min( frame, 1.0 ) ;
 
-	vec2 uv = vUv * 4.0;
-	vec4 depth = texture2D( depthBuffer, uv );
-	vec2 mask = step( vec2( 0.25 ), vUv );
-
 	Ray ray;
 	// ray.origin = cameraPosition;
 	// ray.direction = ( cameraProjectionMatrixInverse * vec4( vUv * 2.0 - 1.0, 1.0, 1.0 ) ).xyz;
@@ -307,10 +303,8 @@ void main( void ) {
 	ray.direction.xy += vec2( random( vUv + time ) * 2.0 - 1.0 , random( vUv - time ) * 2.0 - 1.0 ) / max( dataSize.y,dataSize.x );
 	ray.direction = normalize( ray.direction );
 
-	float clip = ( 1.0 - mask.x ) * ( 1.0 - mask.y );
-	vec4 o = vec4( ( befTex.xyz + radiance( ray ) ) , 1.0 ) * ( 1.0 - clip );
+	vec4 o = vec4( ( befTex.xyz + radiance( ray ) ) , 1.0 );
 	gl_FragColor = o;
 
-	gl_FragColor += mix( vec4(0.0), vec4( depth ), clip ) + befTex * clip;
 
 }

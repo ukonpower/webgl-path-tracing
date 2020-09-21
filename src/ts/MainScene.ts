@@ -48,9 +48,7 @@ export class MainScene extends ORE.BaseScene {
 
 		} );
 
-		this.pathTracingRenderer = new OrayTracingRenderer( this.renderer, this.gProps.resizeArgs.windowPixelSize.multiplyScalar( 1.0 ), this.commonUniforms );
-
-		this.initParam();
+		this.pathTracingRenderer = new OrayTracingRenderer( this.renderer, this.gProps.resizeArgs.windowPixelSize.multiplyScalar( 0.5 ), this.commonUniforms );
 
 		let gltfLoader = new GLTFLoader();
 
@@ -65,80 +63,27 @@ export class MainScene extends ORE.BaseScene {
 
 	}
 
-	public initParam() {
-
-		this.param = {
-			metalness: 0,
-			albedo: '#F00',
-			roughness: 0.1
-		};
-
-		// this.pane = new Tweakpane();
-
-		// this.pane.addInput( this.param, 'metalness', {
-		// 	min: 0, max: 1
-		// } );
-
-		// this.pane.addInput( this.param, 'roughness', {
-		// 	min: 0, max: 1
-		// } );
-
-		// this.pane.addInput( this.param, 'albedo' );
-
-	}
-
-	private updatePane() {
-
-		// this.commonUniforms.metalness.value = this.param.metalness;
-		// this.commonUniforms.roughness.value = this.param.roughness;
-		// this.commonUniforms.albedo.value.set( this.param.albedo );
-
-	}
-
 	public initScene() {
-
-		// this.camera.position.set( 0, 2, 5 );
-		// this.controls.target = new THREE.Vector3( - 0.2, 0.3, 0 );
 
 		this.camera.position.set( - 2, 3, 6 );
 		this.controls.target = new THREE.Vector3( - 0.2, 0.3, 0 );
 
-		let mat: OrayTracingMaterial;
-		let geo: THREE.BufferGeometry;
-		let mesh: THREE.Mesh;
+		this.scene.traverse( ( obj: THREE.Mesh ) => {
 
-		( this.scene.getObjectByName( 'Plane' ) as THREE.Mesh ).material = new OrayTracingMaterial( {
-			baseMaterial: ( this.scene.getObjectByName( 'Plane' ) as THREE.Mesh ).material as THREE.MeshStandardMaterial,
-		} );
+			if ( obj.isMesh ) {
 
-		( this.scene.getObjectByName( 'Suzanne_0' ) as THREE.Mesh ).material = new OrayTracingMaterial( {
-			baseMaterial: ( this.scene.getObjectByName( 'Suzanne_0' ) as THREE.Mesh ).material as THREE.MeshStandardMaterial,
-		} );
+				obj.material = new OrayTracingMaterial( {
+					baseMaterial: obj.material
+				} );
 
-		( this.scene.getObjectByName( 'Suzanne_1' ) as THREE.Mesh ).material = new OrayTracingMaterial( {
-			baseMaterial: ( this.scene.getObjectByName( 'Suzanne_1' ) as THREE.Mesh ).material as THREE.MeshStandardMaterial,
-			albedo: new THREE.Vector3( 0, 1, 0 ),
-			roughness: 0.6,
-			metalness: 0.5
-		} );
+				if ( obj.name == 'Light' ) {
 
-		( this.scene.getObjectByName( 'Cube' ) as THREE.Mesh ).material = new OrayTracingMaterial( {
-			baseMaterial: ( this.scene.getObjectByName( 'Cube' ) as THREE.Mesh ).material as THREE.MeshStandardMaterial,
-		} );
+					( obj.material as OrayTracingMaterial ).emission = new THREE.Vector3( 10, 10, 10 );
 
-		( this.scene.getObjectByName( 'Icosphere' ) as THREE.Mesh ).material = new OrayTracingMaterial( {
-			baseMaterial: ( this.scene.getObjectByName( 'Icosphere' ) as THREE.Mesh ).material as THREE.MeshStandardMaterial,
-			albedo: new THREE.Vector3( 1, 0, 1 ),
-			emission: new THREE.Vector3( 10, 10, 10 ),
-			roughness: 1.0,
-			metalness: 0.5
-		} );
+				}
 
-		( this.scene.getObjectByName( 'Torus' ) as THREE.Mesh ).material = new OrayTracingMaterial( {
-			baseMaterial: ( this.scene.getObjectByName( 'Torus' ) as THREE.Mesh ).material as THREE.MeshStandardMaterial,
-			albedo: new THREE.Vector3( 0, 1, 0 ),
-			roughness: 1.0,
-			metalness: 1.0
+			}
+
 		} );
 
 	}
@@ -146,8 +91,6 @@ export class MainScene extends ORE.BaseScene {
 	public animate( deltaTime: number ) {
 
 		this.commonUniforms.time.value = this.time;
-
-		this.updatePane();
 
 		this.controls.update();
 

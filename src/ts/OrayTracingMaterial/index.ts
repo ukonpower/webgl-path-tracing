@@ -5,11 +5,16 @@ import orayVert from './shaders/oray.vs';
 import orayFrag from './shaders/oray.fs';
 
 export declare interface OrayShaderMaterialParam extends THREE.ShaderMaterialParameters {
-	baseMaterial?: THREE.MeshStandardMaterial;
+	baseMaterial?: THREE.Material | THREE.Material[];
 	albedo?: THREE.Vector3;
 	emission?: THREE.Vector3
 	roughness?: number;
 	metalness?: number;
+	albedoMap?: THREE.Texture;
+	emissionMap?: THREE.Texture;
+	roughnessMap?: THREE.Texture;
+	metalnessMap?: THREE.Texture;
+	normalMap?: THREE.Texture;
 }
 
 export class OrayTracingMaterial extends THREE.ShaderMaterial {
@@ -20,7 +25,6 @@ export class OrayTracingMaterial extends THREE.ShaderMaterial {
 
 		param.fragmentShader = param.fragmentShader || orayFrag;
 		param.vertexShader = param.vertexShader || orayVert;
-
 		param.uniforms = param.uniforms || {};
 
 		if ( param.uniforms.renderType ) {
@@ -31,31 +35,52 @@ export class OrayTracingMaterial extends THREE.ShaderMaterial {
 
 		param.uniforms.renderType = { value: 0 };
 
-		let albedoMap = param.baseMaterial && param.baseMaterial.map;
-		let roughnessMap = param.baseMaterial && param.baseMaterial.roughnessMap;
-		let metalnessMap = param.baseMaterial && param.baseMaterial.metalnessMap;
-		let normalMap = param.baseMaterial && param.baseMaterial.normalMap;
+		let baseMat = param.baseMaterial && ( param.baseMaterial as THREE.Material[] ).length == undefined && param.baseMaterial as THREE.MeshStandardMaterial;
+		let albedoMap = param.albedoMap || baseMat && baseMat.map;
+		let roughnessMap = param.roughnessMap || baseMat && baseMat.roughnessMap;
+		let metalnessMap = param.metalnessMap || baseMat && baseMat.metalnessMap;
+		let normalMap = param.normalMap || baseMat && baseMat.normalMap;
+		let emissionMap = param.emissionMap && baseMat.normalMap;
 
 		param.defines = {
 			"USE_ALBEDOMAP": ( albedoMap != null ) && param.albedo == null,
 			"USE_ROUGHNESSMAP": ( roughnessMap != null ) && param.roughness == null,
 			"USE_METALNESSMAP": ( metalnessMap != null ) && param.metalness == null,
 			"USE_NORMALMAP": ( normalMap != null ),
+			"USE_EMISSIONMAP": ( emissionMap != null ),
 		};
 
-		param.uniforms.albedo = param.uniforms.albedo || { value: param.albedo || new THREE.Vector3( 1, 1, 1 ) };
-		param.uniforms.emission = param.uniforms.emission || { value: param.emission || new THREE.Vector3() };
-		param.uniforms.roughness = param.uniforms.roughness || { value: param.roughness != null ? param.roughness : 0.5 };
-		param.uniforms.metalness = param.uniforms.metalness || { value: param.metalness != null ? param.metalness : 0.0 };
-
+		param.uniforms.albedo = { value: param.albedo || ( roughnessMap ? new THREE.Vector3( 1, 1, 1 ) : new THREE.Vector3( 0, 0, 0 ) ) };
+		param.uniforms.emission = { value: param.emission || new THREE.Vector3() };
+		param.uniforms.roughness = { value: param.roughness != null ? param.roughness : 0.5 };
+		param.uniforms.metalness = { value: param.metalness != null ? param.metalness : 0.0 };
 		param.uniforms.albedoMap = { value: albedoMap };
+		param.uniforms.emissionMap = { value: emissionMap };
 		param.uniforms.roughnessMap = { value: roughnessMap };
 		param.uniforms.metalnessMap = { value: metalnessMap };
 		param.uniforms.normalMap = { value: normalMap };
 
-		param.extensions = {
-			derivatives: true
+		if ( param.extensions ) {
+
+			param.extensions.derivatives = true;
+
+		} else {
+
+			param.extensions = {
+				derivatives: true
+			};
+
 		}
+
+		delete param.baseMaterial;
+		delete param.albedo;
+		delete param.roughness;
+		delete param.metalness;
+		delete param.emission;
+		delete param.albedoMap;
+		delete param.roughnessMap;
+		delete param.metalnessMap;
+		delete param.emissionMap;
 
 		super( param );
 
