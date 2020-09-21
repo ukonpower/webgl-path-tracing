@@ -79,8 +79,8 @@ export class MainScene extends ORE.BaseScene {
 
 	public initScene() {
 
-		this.camera.position.set( 4, 1, 4 );
-		this.controls.target = new THREE.Vector3( - 0.2, 0.3, 0 );
+		this.camera.position.set( 3, 3, 10 );
+		this.controls.target = new THREE.Vector3( 0, 0, 0 );
 
 		this.scene.traverse( ( obj: THREE.Mesh ) => {
 

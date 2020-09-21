@@ -25,7 +25,7 @@ uniform samplerCube envMap;
 bool debug = false;
 varying vec2 vUv;
 
-#define MAX_BOUNCE 10
+#define MAX_BOUNCE 8
 
 $constants
 $random
@@ -140,7 +140,7 @@ int shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 
 	for( int i = 0; i < MAX_STEP; i++ ) {
 		
-		intersection.nextPosition = intersection.position + ray.direction * 0.1;
+		intersection.nextPosition = intersection.position + ray.direction * 0.5;
 		vec3 startPosClip;
 		vec3 nextPosClip;
 		vec2 nextPosUV;
@@ -194,8 +194,8 @@ int shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 			mat.emission = texture2D( emissionBuffer, nextPosUV ).xyz;
 			
 			vec4 rmTex = texture2D( materialBuffer, nextPosUV );
-			mat.roughness = rmTex.x;
-			mat.metalness = rmTex.y;
+			mat.roughness = rmTex.y;
+			mat.metalness = rmTex.z;
 			intersection.material = mat;
 			intersection.normal = normalize( texture2D( normalBuffer, nextPosUV ).xyz * 2.0 - 1.0 );
 			intersection.position = ( cameraProjectionMatrixInverse * vec4( (nextPosUV * 2.0 - 1.0) * texDepthFront.w, texDepthFrontClip, texDepthFront.w ) ).xyz;
@@ -231,7 +231,7 @@ int shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 	} else {
 
 		vec4 rayDir = vec4( ray.direction, 1.0 ) * cameraMatrixWorldInverse;
-		intersection.material.emission = textureCube( envMap, rayDir.xyz, 0.0 ).xyz * 2.0;
+		intersection.material.emission = textureCube( envMap, rayDir.xyz, 0.0 ).xyz * 2.5;
 
 	}
 

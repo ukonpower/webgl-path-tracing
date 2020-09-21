@@ -11,7 +11,7 @@ void main( void ) {
 	vec4 mvPosition = modelViewMatrix * vec4( pos, 1.0 );
 	gl_Position = projectionMatrix * mvPosition;
 
-	vUv = vec2( uv.x, 1.0 - uv.y );
+	vUv = uv;
 	vNormal = normal;
 	vPos = gl_Position;
 	vViewPosition = - mvPosition.xyz;

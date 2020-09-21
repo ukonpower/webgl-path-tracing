@@ -40,20 +40,20 @@ export class OrayTracingMaterial extends THREE.ShaderMaterial {
 		let roughnessMap = param.roughnessMap || baseMat && baseMat.roughnessMap;
 		let metalnessMap = param.metalnessMap || baseMat && baseMat.metalnessMap;
 		let normalMap = param.normalMap || baseMat && baseMat.normalMap;
-		let emissionMap = param.emissionMap && baseMat.normalMap;
+		let emissionMap = param.emissionMap && baseMat && baseMat.emissiveMap;
 
 		param.defines = {
 			"USE_ALBEDOMAP": ( albedoMap != null ) && param.albedo == null,
 			"USE_ROUGHNESSMAP": ( roughnessMap != null ) && param.roughness == null,
 			"USE_METALNESSMAP": ( metalnessMap != null ) && param.metalness == null,
 			"USE_NORMALMAP": ( normalMap != null ),
-			"USE_EMISSIONMAP": ( emissionMap != null ),
+			"USE_EMISSIONMAP": ( emissionMap != null ) && param.emission == null,
 		};
 
-		param.uniforms.albedo = { value: param.albedo || ( roughnessMap ? new THREE.Vector3( 1, 1, 1 ) : new THREE.Vector3( 0, 0, 0 ) ) };
-		param.uniforms.emission = { value: param.emission || new THREE.Vector3() };
-		param.uniforms.roughness = { value: param.roughness != null ? param.roughness : 0.5 };
-		param.uniforms.metalness = { value: param.metalness != null ? param.metalness : 0.0 };
+		param.uniforms.albedo = { value: param.albedo || ( baseMat ? baseMat.color : new THREE.Vector3( 0, 0, 0 ) ) };
+		param.uniforms.emission = { value: param.emission || ( baseMat ? baseMat.emissive : new THREE.Vector3( 0, 0, 0 ) ) };
+		param.uniforms.roughness = { value: param.roughness || ( baseMat ? baseMat.roughness : 0.0 ) };
+		param.uniforms.metalness = { value: param.metalness || ( baseMat ? baseMat.metalness : 0.0 ) };
 		param.uniforms.albedoMap = { value: albedoMap };
 		param.uniforms.emissionMap = { value: emissionMap };
 		param.uniforms.roughnessMap = { value: roughnessMap };

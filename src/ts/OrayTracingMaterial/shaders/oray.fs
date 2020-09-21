@@ -64,21 +64,21 @@ void main( void ) {
 
 		#ifdef USE_ROUGHNESSMAP
 
-			gl_FragColor.x = texture2D( roughnessMap, vUv ).y;
+			gl_FragColor.y = texture2D( roughnessMap, vUv ).y * roughness;
 
 		#else
 		
-			gl_FragColor.x = roughness;
+			gl_FragColor.y = roughness;
 			
 		#endif
 
 		#ifdef USE_METALNESSMAP
 
-			gl_FragColor.y = texture2D( metalnessMap, vUv ).x;
+			gl_FragColor.z = texture2D( metalnessMap, vUv ).z * metalness;
 
 		#else
 		
-			gl_FragColor.y = metalness;
+			gl_FragColor.z = metalness;
 			
 		#endif
 		
