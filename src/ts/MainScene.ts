@@ -48,7 +48,7 @@ export class MainScene extends ORE.BaseScene {
 
 		} );
 
-		this.pathTracingRenderer = new OrayTracingRenderer( this.renderer, this.gProps.resizeArgs.windowPixelSize.multiplyScalar( 0.5 ), this.commonUniforms );
+		this.pathTracingRenderer = new OrayTracingRenderer( this.renderer, this.gProps.resizeArgs.windowPixelSize.multiplyScalar( 1.0 ), this.commonUniforms );
 
 		this.initParam();
 
@@ -108,35 +108,34 @@ export class MainScene extends ORE.BaseScene {
 		let mesh: THREE.Mesh;
 
 		( this.scene.getObjectByName( 'Plane' ) as THREE.Mesh ).material = new OrayTracingMaterial( {
-			roughness: 0.0,
-			metalness: 0.1
+			baseMaterial: ( this.scene.getObjectByName( 'Plane' ) as THREE.Mesh ).material as THREE.MeshStandardMaterial,
 		} );
 
 		( this.scene.getObjectByName( 'Suzanne_0' ) as THREE.Mesh ).material = new OrayTracingMaterial( {
-			albedo: new THREE.Vector3( 1, 0, 0 ),
-			roughness: 0.3,
-			metalness: 0.0,
+			baseMaterial: ( this.scene.getObjectByName( 'Suzanne_0' ) as THREE.Mesh ).material as THREE.MeshStandardMaterial,
 		} );
 
 		( this.scene.getObjectByName( 'Suzanne_1' ) as THREE.Mesh ).material = new OrayTracingMaterial( {
+			baseMaterial: ( this.scene.getObjectByName( 'Suzanne_1' ) as THREE.Mesh ).material as THREE.MeshStandardMaterial,
 			albedo: new THREE.Vector3( 0, 1, 0 ),
 			roughness: 0.6,
 			metalness: 0.5
 		} );
 
 		( this.scene.getObjectByName( 'Cube' ) as THREE.Mesh ).material = new OrayTracingMaterial( {
-			albedo: new THREE.Vector3( 0, 0, 1 ),
-			roughness: 1.0,
-			metalness: 0.5,
+			baseMaterial: ( this.scene.getObjectByName( 'Cube' ) as THREE.Mesh ).material as THREE.MeshStandardMaterial,
 		} );
 
 		( this.scene.getObjectByName( 'Icosphere' ) as THREE.Mesh ).material = new OrayTracingMaterial( {
+			baseMaterial: ( this.scene.getObjectByName( 'Icosphere' ) as THREE.Mesh ).material as THREE.MeshStandardMaterial,
 			albedo: new THREE.Vector3( 1, 0, 1 ),
+			emission: new THREE.Vector3( 10, 10, 10 ),
 			roughness: 1.0,
 			metalness: 0.5
 		} );
 
 		( this.scene.getObjectByName( 'Torus' ) as THREE.Mesh ).material = new OrayTracingMaterial( {
+			baseMaterial: ( this.scene.getObjectByName( 'Torus' ) as THREE.Mesh ).material as THREE.MeshStandardMaterial,
 			albedo: new THREE.Vector3( 0, 1, 0 ),
 			roughness: 1.0,
 			metalness: 1.0

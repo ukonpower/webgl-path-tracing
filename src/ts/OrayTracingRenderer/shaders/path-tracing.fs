@@ -304,7 +304,7 @@ void main( void ) {
 	
 	ray.origin = vec3( 0.0, 0.0, 0.0 );
 	ray.direction = ( cameraProjectionMatrixInverse * vec4( vUv * 2.0 - 1.0, 1.0, 1.0 ) ).xyz;
-	ray.direction.xy += vec2( random( vUv + time ) * 2.0 - 1.0 , random( vUv - time ) * 2.0 - 1.0 ) / max( dataSize.y,dataSize.x);
+	ray.direction.xy += vec2( random( vUv + time ) * 2.0 - 1.0 , random( vUv - time ) * 2.0 - 1.0 ) / max( dataSize.y,dataSize.x );
 	ray.direction = normalize( ray.direction );
 
 	float clip = ( 1.0 - mask.x ) * ( 1.0 - mask.y );

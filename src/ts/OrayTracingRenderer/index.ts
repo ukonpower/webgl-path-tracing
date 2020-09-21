@@ -86,11 +86,11 @@ export class OrayTracingRenderer extends ORE.GPUComputationController {
 			albedo: new THREE.WebGLRenderTarget( this.dataSize.x * 2, this.dataSize.y * 2, {
 				magFilter: THREE.NearestFilter,
 				minFilter: THREE.NearestFilter,
-				depthBuffer: true,
 			} ),
 			emission: new THREE.WebGLRenderTarget( this.dataSize.x * 1, this.dataSize.y * 1, {
 				magFilter: THREE.NearestFilter,
 				minFilter: THREE.NearestFilter,
+				type: THREE.HalfFloatType
 			} ),
 			material: new THREE.WebGLRenderTarget( this.dataSize.x * 1, this.dataSize.y * 1, {
 				magFilter: THREE.NearestFilter,
