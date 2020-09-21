@@ -48,7 +48,7 @@ export class MainScene extends ORE.BaseScene {
 
 		} );
 
-		this.pathTracingRenderer = new OrayTracingRenderer( this.renderer, this.gProps.resizeArgs.windowPixelSize.multiplyScalar( 1.0 ), this.commonUniforms );
+		this.pathTracingRenderer = new OrayTracingRenderer( this.renderer, this.gProps.resizeArgs.windowPixelSize.multiplyScalar( 0.5 ), this.commonUniforms );
 
 		this.initParam();
 

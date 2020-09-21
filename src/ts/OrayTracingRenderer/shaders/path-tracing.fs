@@ -24,7 +24,7 @@ uniform sampler2D backDepthBuffer;
 bool debug = false;
 varying vec2 vUv;
 
-#define MAX_BOUNCE 20
+#define MAX_BOUNCE 10
 
 $constants
 $random
@@ -118,6 +118,19 @@ vec3 diffuse( Intersection intersection, vec2 noise ) {
 
 #define MAX_STEP 40
 
+bool checkIntersect( inout vec3 startPos, inout vec3 nextPos ) {
+
+	return false;
+	
+}
+
+vec3 getScreenPos( vec3 p ) {
+
+	vec4 clip = cameraProjectionMatrix * vec4( p, 1.0 );
+	return ( clip / clip.w ).xyz;
+
+}
+
 int shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 
 	intersection.hit = false;
@@ -126,56 +139,69 @@ int shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 
 	for( int i = 0; i < MAX_STEP; i++ ) {
 		
-		intersection.nextPosition = intersection.position + ray.direction * 0.5;;
+		intersection.nextPosition = intersection.position + ray.direction;
+		vec3 startPosClip;
+		vec3 nextPosClip;
+		vec2 nextPosUV;
+		vec4 texDepthFront;
+		vec4 texDepthBack;
+		float texDepthFrontClip;
+		float texDepthBackClip;
 
-		vec4 startPosClip = cameraProjectionMatrix * vec4( intersection.position, 1.0 );
-		startPosClip /= startPosClip.w;
+		for( int j = 0; j < 1; j ++ ) {
 
-		vec4 nextPosClip = cameraProjectionMatrix * vec4( intersection.nextPosition, 1.0 );
-		nextPosClip /= nextPosClip.w;
+			startPosClip = getScreenPos( intersection.position );
+			nextPosClip = getScreenPos( intersection.nextPosition );
+			
+			nextPosUV = nextPosClip.xy * 0.5 + 0.5 + vec2( random( vUv + time ) * 2.0 - 1.0 , random( vUv - time ) * 2.0 - 1.0 ) * 0.0007;
 
-		vec2 pickUV = nextPosClip.xy * 0.5 + 0.5;
-		
-		vec4 texDepthFront = texture2D( depthBuffer, pickUV );
-		float nextBufferDepthFront = texDepthFront.x / texDepthFront.w;
+			texDepthFront = texture2D( depthBuffer, nextPosUV );
+			texDepthFrontClip = texDepthFront.x / texDepthFront.w;
 
-		vec4 texDepthBack = texture2D( backDepthBuffer, pickUV );
-		float nextBufferDepthBack = texDepthBack.x / texDepthBack.w;
-		
-		float nextPosDepth = nextPosClip.z;
-		float startPosDepth = startPosClip.z;
+			texDepthBack = texture2D( backDepthBuffer, nextPosUV );
+			texDepthBackClip = texDepthBack.x / texDepthBack.w;
 
-		if(
-			(( nextPosDepth >= nextBufferDepthFront && nextBufferDepthFront >= startPosDepth ) || 
-			( nextPosDepth >= nextBufferDepthFront && startPosDepth <= nextBufferDepthBack ) ) &&
-			nextBufferDepthFront != 0.0 
-		) {
+			if(
+				(( nextPosClip.z >= texDepthFrontClip && texDepthFrontClip >= startPosClip.z ) || 
+				( nextPosClip.z >= texDepthFrontClip && startPosClip.z <= texDepthBackClip ) ) &&
+				texDepthFrontClip != 0.0 
+			) {
 
-			Material mat;
-			mat.albedo = texture2D( albedoBuffer, pickUV ).xyz;
-			mat.emission = texture2D( emissionBuffer, pickUV ).xyz;
-			vec4 matTex = texture2D( materialBuffer, pickUV );
-			mat.roughness = matTex.x;
-			mat.metalness = matTex.y;
+				intersection.hit = true;
+				intersection.nextPosition = ( intersection.position + intersection.nextPosition ) / 2.0;
 
-			intersection.normal = normalize( texture2D( normalBuffer, pickUV ).xyz * 2.0 - 1.0 );
+			} else {
 
-			vec3 p = ( cameraProjectionMatrixInverse * vec4( (pickUV * 2.0 - 1.0) * texDepthFront.w, nextBufferDepthFront, texDepthFront.w ) ).xyz;
-			intersection.position = p;
-			intersection.material = mat;
+				if( j == 0 ) {
 
-			intersection.hit = true;
+					break;
+					
+				} else {
 
-			if( false ) {
+					vec3 nextPos = intersection.nextPosition + ( intersection.nextPosition - intersection.position ) / 2.0;
+					intersection.position = intersection.nextPosition;
+					intersection.nextPosition = nextPos;
 
-				debug = true;
-				#define DEBUG_NUM 1
-				// intersection.material.albedo = vec3( currentDepth >= nextBufferDepthFront, nextBufferDepthFront >= memDepth, 0.0 );
+				}
 
 			}
+		
+		}
 
+		if( intersection.hit ) {
+
+			Material mat;
+			mat.albedo = texture2D( albedoBuffer, nextPosUV ).xyz;
+			mat.emission = texture2D( emissionBuffer, nextPosUV ).xyz;
+			
+			vec4 rmTex = texture2D( materialBuffer, nextPosUV );
+			mat.roughness = rmTex.x;
+			mat.metalness = rmTex.y;
+			intersection.material = mat;
+			intersection.normal = normalize( texture2D( normalBuffer, nextPosUV ).xyz * 2.0 - 1.0 );
+			intersection.position = ( cameraProjectionMatrixInverse * vec4( (nextPosUV * 2.0 - 1.0) * texDepthFront.w, texDepthFrontClip, texDepthFront.w ) ).xyz;
 			break;
-
+			
 		}
 
 		intersection.position = intersection.nextPosition;
@@ -261,12 +287,6 @@ vec3 radiance( inout Ray ray ) {
 
 	}
 
-	if( debug ) {
-
-		col = memAlbedo[DEBUG_NUM];
-		
-	}
-
 	return col;
 	
 	
@@ -277,7 +297,7 @@ void main( void ) {
 	vec4 befTex = texture2D( backBuffer, vUv ) * min( frame, 1.0 ) ;
 
 	vec2 uv = vUv * 4.0;
-	vec4 depth = texture2D( backNormalBuffer, uv );
+	vec4 depth = texture2D( depthBuffer, uv );
 	vec2 mask = step( vec2( 0.25 ), vUv );
 
 	Ray ray;
@@ -290,7 +310,6 @@ void main( void ) {
 
 	float clip = ( 1.0 - mask.x ) * ( 1.0 - mask.y );
 	vec4 o = vec4( ( befTex.xyz + radiance( ray ) ) , 1.0 ) * ( 1.0 - clip );
-	// vec4 o = vec4( ( befTex.xyz + vec3( ray.direction.xyz ) ) , 1.0 ) * ( 1.0 - clip );
 	gl_FragColor = o;
 
 	gl_FragColor += mix( vec4(0.0), vec4( depth ), clip ) + befTex * clip;

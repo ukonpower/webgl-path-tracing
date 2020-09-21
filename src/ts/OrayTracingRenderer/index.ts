@@ -6,13 +6,13 @@ import screenFrag from './shaders/screen.fs';
 import { OrayTracingMaterial } from '../OrayTracingMaterial';
 
 declare interface OrayRenderTargets {
-	albedo: ORE.GPUcomputationData;
-	emission: ORE.GPUcomputationData;
-	material: ORE.GPUcomputationData;
-	normal: ORE.GPUcomputationData;
-	depth: ORE.GPUcomputationData;
-	backNormal: ORE.GPUcomputationData;
-	backDepth: ORE.GPUcomputationData;
+	albedo: THREE.WebGLRenderTarget;
+	emission: THREE.WebGLRenderTarget;
+	material: THREE.WebGLRenderTarget;
+	normal: THREE.WebGLRenderTarget;
+	depth: THREE.WebGLRenderTarget;
+	backNormal: THREE.WebGLRenderTarget;
+	backDepth: THREE.WebGLRenderTarget;
 }
 
 export class OrayTracingRenderer extends ORE.GPUComputationController {
@@ -83,26 +83,37 @@ export class OrayTracingRenderer extends ORE.GPUComputationController {
 		this.renderResultData = this.createData();
 
 		this.orayRenderTargets = {
-			albedo: this.createData( {
-				depthBuffer: true,
+			albedo: new THREE.WebGLRenderTarget( this.dataSize.x * 2, this.dataSize.y * 2, {
+				magFilter: THREE.NearestFilter,
+				minFilter: THREE.NearestFilter,
 			} ),
-			emission: this.createData( {
-				depthBuffer: true,
+			emission: new THREE.WebGLRenderTarget( this.dataSize.x * 1, this.dataSize.y * 1, {
+				magFilter: THREE.NearestFilter,
+				minFilter: THREE.NearestFilter,
 			} ),
-			material: this.createData( {
-				depthBuffer: true,
+			material: new THREE.WebGLRenderTarget( this.dataSize.x * 1, this.dataSize.y * 1, {
+				magFilter: THREE.NearestFilter,
+				minFilter: THREE.NearestFilter,
 			} ),
-			normal: this.createData( {
-				depthBuffer: true,
+			normal: new THREE.WebGLRenderTarget( this.dataSize.x * 1, this.dataSize.y * 1, {
+				magFilter: THREE.NearestFilter,
+				minFilter: THREE.NearestFilter,
+				type: THREE.FloatType,
 			} ),
-			depth: this.createData( {
-				depthBuffer: true,
+			depth: new THREE.WebGLRenderTarget( this.dataSize.x * 2, this.dataSize.y * 2, {
+				magFilter: THREE.NearestFilter,
+				minFilter: THREE.NearestFilter,
+				type: THREE.FloatType,
 			} ),
-			backNormal: this.createData( {
-				depthBuffer: true,
+			backNormal: new THREE.WebGLRenderTarget( this.dataSize.x * 1, this.dataSize.y * 1, {
+				magFilter: THREE.NearestFilter,
+				minFilter: THREE.NearestFilter,
+				type: THREE.FloatType,
 			} ),
-			backDepth: this.createData( {
-				depthBuffer: true,
+			backDepth: new THREE.WebGLRenderTarget( this.dataSize.x * 2, this.dataSize.y * 2, {
+				magFilter: THREE.NearestFilter,
+				minFilter: THREE.NearestFilter,
+				type: THREE.FloatType,
 			} ),
 		};
 
@@ -137,11 +148,11 @@ export class OrayTracingRenderer extends ORE.GPUComputationController {
 
 				} );
 
-				this.renderer.setRenderTarget( this.orayRenderTargets[ keys[ i ] ].buffer );
+				this.renderer.setRenderTarget( this.orayRenderTargets[ keys[ i ] ] );
 
 				this.renderer.render( scene, camera );
 
-				this.commonUniforms[ keys[ i ] + 'Buffer' ].value = this.orayRenderTargets[ keys[ i ] ].buffer.texture;
+				this.commonUniforms[ keys[ i ] + 'Buffer' ].value = this.orayRenderTargets[ keys[ i ] ].texture;
 
 			}
 
@@ -159,14 +170,6 @@ export class OrayTracingRenderer extends ORE.GPUComputationController {
 		this.commonUniforms.renderResult.value = this.renderResultData.buffer.texture;
 
 		this.renderer.render( this.renderScene, camera );
-
-	}
-
-	public resize( resizeArgs: ORE.ResizeArgs ) {
-
-		this.uniforms.dataSize.value.copy( resizeArgs.windowPixelSize );
-
-		this.renderResultData.buffer.setSize( resizeArgs.windowPixelSize.x, resizeArgs.windowPixelSize.y );
 
 	}
 
