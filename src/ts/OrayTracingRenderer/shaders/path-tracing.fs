@@ -162,9 +162,7 @@ int shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 			texDepthBackClip = texDepthBack.x / texDepthBack.w;
 
 			if(
-				(( nextPosClip.z >= texDepthFrontClip && texDepthFrontClip >= startPosClip.z ) || 
-				( nextPosClip.z >= texDepthFrontClip && startPosClip.z <= texDepthBackClip ) ) &&
-				texDepthFrontClip != 0.0 
+				( nextPosClip.z >= texDepthFrontClip && startPosClip.z <= texDepthBackClip ) && texDepthFrontClip != 0.0 
 			) {
 
 				intersection.hit = true;
