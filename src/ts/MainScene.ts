@@ -48,7 +48,7 @@ export class MainScene extends ORE.BaseScene {
 
 		} );
 
-		this.pathTracingRenderer = new OrayTracingRenderer( this.renderer, this.gProps.resizeArgs.windowPixelSize.multiplyScalar( 0.5 ), this.commonUniforms );
+		this.pathTracingRenderer = new OrayTracingRenderer( this.renderer, this.gProps.resizeArgs.windowPixelSize.multiplyScalar( 1.0 ), this.commonUniforms );
 
 		let gltfLoader = new GLTFLoader();
 
@@ -60,12 +60,26 @@ export class MainScene extends ORE.BaseScene {
 
 		} );
 
+		let loader = new THREE.CubeTextureLoader();
+		loader.load( [
+			'./assets/img/cubemap/Bridge2/posx.jpg',
+			'./assets/img/cubemap/Bridge2/negx.jpg',
+			'./assets/img/cubemap/Bridge2/posy.jpg',
+			'./assets/img/cubemap/Bridge2/negy.jpg',
+			'./assets/img/cubemap/Bridge2/posz.jpg',
+			'./assets/img/cubemap/Bridge2/negz.jpg',
+		], ( tex ) => {
+
+			this.scene.background = tex;
+
+		} );
+
 
 	}
 
 	public initScene() {
 
-		this.camera.position.set( - 2, 3, 6 );
+		this.camera.position.set( 4, 1, 4 );
 		this.controls.target = new THREE.Vector3( - 0.2, 0.3, 0 );
 
 		this.scene.traverse( ( obj: THREE.Mesh ) => {
@@ -76,7 +90,7 @@ export class MainScene extends ORE.BaseScene {
 					baseMaterial: obj.material
 				} );
 
-				if ( obj.name == 'Light' ) {
+				if ( obj.name.indexOf( 'Light' ) > - 1 ) {
 
 					( obj.material as OrayTracingMaterial ).emission = new THREE.Vector3( 10, 10, 10 );
 

@@ -64,12 +64,21 @@ export class OrayTracingRenderer extends ORE.GPUComputationController {
 			cameraMatrixWorld: {
 				value: null
 			},
+			cameraMatrixWorldInverse: {
+				value: null
+			},
 			cameraProjectionMatrixInverse: {
 				value: null
 			},
 			cameraProjectionMatrix: {
 				value: null
 			},
+			envMap: {
+				value: null
+			},
+			background: {
+				value: new THREE.Vector3( 1.0, 1.0, 1.0 )
+			}
 		}, parentUniforms );
 
 		this.init();
@@ -135,6 +144,9 @@ export class OrayTracingRenderer extends ORE.GPUComputationController {
 
 		if ( updateScene ) {
 
+			let background = scene.background;
+			scene.background = null;
+
 			let keys = Object.keys( this.orayRenderTargets );
 
 			for ( let i = 0; i < keys.length; i ++ ) {
@@ -157,14 +169,31 @@ export class OrayTracingRenderer extends ORE.GPUComputationController {
 
 			}
 
+			scene.background = background;
+
 		}
 
 		this.renderer.setRenderTarget( renderTargetMem );
 
 		this.commonUniforms.backBuffer.value = this.renderResultData.buffer.texture;
-		this.commonUniforms.cameraMatrixWorld.value = camera.matrixWorld.clone();
-		this.commonUniforms.cameraProjectionMatrix.value = camera.projectionMatrix.clone();
-		this.commonUniforms.cameraProjectionMatrixInverse.value = camera.projectionMatrixInverse.clone();
+		this.commonUniforms.cameraMatrixWorld.value = camera.matrixWorld;
+		this.commonUniforms.cameraMatrixWorldInverse.value = camera.matrixWorldInverse;
+		this.commonUniforms.cameraProjectionMatrix.value = camera.projectionMatrix;
+		this.commonUniforms.cameraProjectionMatrixInverse.value = camera.projectionMatrixInverse;
+
+		if ( scene.background ) {
+
+			if ( ( scene.background as THREE.Texture ).isTexture ) {
+
+				this.commonUniforms.envMap.value = scene.background;
+
+			} else {
+
+				this.commonUniforms.background.value.copy( scene.background );
+
+			}
+
+		}
 
 		this.compute( this.renderKernel, this.renderResultData, camera );
 

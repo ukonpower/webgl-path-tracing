@@ -1,5 +1,6 @@
 uniform vec2 dataSize;
 uniform mat4 cameraMatrixWorld;
+uniform mat4 cameraMatrixWorldInverse;
 uniform mat4 cameraProjectionMatrix;
 uniform mat4 cameraProjectionMatrixInverse;
 uniform mat4 projectionMatrix;
@@ -19,7 +20,7 @@ uniform sampler2D normalBuffer;
 uniform sampler2D depthBuffer;
 uniform sampler2D backNormalBuffer;
 uniform sampler2D backDepthBuffer;
-
+uniform samplerCube envMap;
 
 bool debug = false;
 varying vec2 vUv;
@@ -229,7 +230,8 @@ int shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 
 	} else {
 
-		intersection.material.emission = vec3( 1.0 );
+		vec4 rayDir = vec4( ray.direction, 1.0 ) * cameraMatrixWorldInverse;
+		intersection.material.emission = textureCube( envMap, rayDir.xyz, 0.0 ).xyz * 2.0;
 
 	}
 
