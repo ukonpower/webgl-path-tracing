@@ -117,7 +117,7 @@ vec3 diffuse( Intersection intersection, vec2 noise ) {
 
 }
 
-#define MAX_STEP 40
+#define MAX_STEP 100
 
 bool checkIntersect( inout vec3 startPos, inout vec3 nextPos ) {
 
@@ -140,7 +140,7 @@ int shootRay( inout Intersection intersection, inout Ray ray, int bounce ) {
 
 	for( int i = 0; i < MAX_STEP; i++ ) {
 		
-		intersection.nextPosition = intersection.position + ray.direction;
+		intersection.nextPosition = intersection.position + ray.direction * 0.1;
 		vec3 startPosClip;
 		vec3 nextPosClip;
 		vec2 nextPosUV;
