@@ -28,3 +28,37 @@ html,body{
 	width: 100%;
 	height: 100%;
 }
+
+.ui {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+}
+
+.loading {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	background-color: rgba($color: #000000, $alpha: 0.5);
+	display: flex;
+    flex-direction: column;
+    justify-content: center;
+	align-items: center; 
+
+	transition: opacity .4s;
+	[data-loaded="true"] & {
+		pointer-events: none;
+		opacity: 0;
+	}
+	
+	&-text{
+		font-size: 30px;
+		font-weight: bold;
+		color: white;
+	}
+}

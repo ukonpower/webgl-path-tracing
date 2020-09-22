@@ -61,6 +61,7 @@ export class MainScene extends ORE.BaseScene {
 			this.initScene();
 
 			this.loaded = true;
+			document.body.setAttribute( 'data-loaded', 'true' );
 
 		} );
 
