@@ -14,6 +14,8 @@ export class MainScene extends ORE.BaseScene {
 	private pathTracingRenderer: OrayTracingRenderer;
 	private controls: OrbitControls;
 
+	private loaded: boolean = false;
+
 	private pane: Tweakpane;
 	private param: any;
 
@@ -57,6 +59,8 @@ export class MainScene extends ORE.BaseScene {
 			this.scene.add( gltf.scene );
 
 			this.initScene();
+
+			this.loaded = true;
 
 		} );
 
@@ -103,6 +107,8 @@ export class MainScene extends ORE.BaseScene {
 	}
 
 	public animate( deltaTime: number ) {
+
+		if ( ! this.loaded ) return;
 
 		this.commonUniforms.time.value = this.time;
 
